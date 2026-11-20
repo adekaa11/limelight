@@ -145,12 +145,12 @@ def analyze_audio(path: str) -> dict:
     bpm = float(np.atleast_1d(tempo)[0])
     beats = librosa.frames_to_time(beat_frames, sr=sr).round(3).tolist()
 
-    # лад: гармоническая часть (без ударных) -> CQT-хромограмма -> 24 профиля Крумханзля
-    y_harm = librosa.effects.harmonic(y, margin=3.0)
-    chroma = librosa.feature.chroma_cqt(y=y_harm, sr=sr)
-    # вес = энергия кадра: тихие переходы меньше влияют на тональность
-    w = librosa.feature.rms(y=y_harm, hop_length=512)[0][: chroma.shape[1]]
-    prof = (chroma[:, : len(w)] * w).sum(axis=1) / max(w.sum(), 1e-9)
+    # лад: CQT-хромограмма -> медиана по битам (гасит ударные дешевле, чем HPSS) -> 24 профиля Крумханзля
+    chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    if len(beat_frames) > 4:
+        prof = np.median(librosa.util.sync(chroma, beat_frames, aggregate=np.median), axis=1)
+    else:
+        prof = chroma.mean(axis=1)
     best = (-2.0, "major", 0)
     for i in range(12):
         for mode, tmpl in (("major", MAJOR_PROFILE), ("minor", MINOR_PROFILE)):
