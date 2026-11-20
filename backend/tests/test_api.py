@@ -77,6 +77,11 @@ def test_same_title_gets_unique_folder(monkeypatch):
 
 def test_song_url_stub(monkeypatch):
     _no_voice(monkeypatch)
+    monkeypatch.setattr(pipeline, "analyze_song", lambda url, path: {
+        "title": "Song", "artist": "Artist", "source_url": url, "preview_url": None,
+        "bpm": 96, "mode": "major", "energy": 0.5, "valence": 0.6, "genre": "pop", "year": 2020,
+        "beats": [0.3, 0.925, 1.55], "sections": [0.0, 10.0], "source": "deezer",
+    })
     r = client.post("/api/days", data={"text": TEXT, "song_url": "https://www.deezer.com/track/3135556"})
     song = r.json()["song"]
     assert song["source_url"].startswith("https://www.deezer.com")

@@ -34,6 +34,32 @@ app.add_middleware(
 )
 
 storage = get_storage()
+
+
+@app.on_event("startup")
+def _warm_up_librosa() -> None:
+    """Прогрев в фоне: импорт librosa и JIT numba занимают десятки секунд на слабом CPU Render.
+    Делаем это сразу после старта, а не на первом пользовательском дне."""
+    import threading
+
+    def run() -> None:
+        try:
+            import numpy as np
+
+            from .analyzers.music import SR, analyze_audio
+
+            import soundfile as sf
+            import tempfile
+
+            with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+                t = np.arange(SR * 4) / SR
+                sf.write(f.name, 0.3 * np.sin(2 * np.pi * 220 * t), SR)
+                analyze_audio(f.name)
+            logging.getLogger(__name__).info("librosa прогрета")
+        except Exception as e:  # прогрев не обязателен
+            logging.getLogger(__name__).warning("прогрев librosa: %s", e)
+
+    threading.Thread(target=run, daemon=True).start()
 if isinstance(storage, LocalStorage):
     app.mount("/files", StaticFiles(directory=storage.files), name="files")
 
@@ -78,6 +104,20 @@ async def health_deps(voice_name: str = "ru-RU-SvetlanaNeural", rate: str = "+0%
         except Exception as e:
             voice = {"ok": False, "error": f"{type(e).__name__}: {e}"[:400]}
     return {"llm": llm, "voice": voice}
+
+
+@app.get("/api/health/song")
+async def health_song(url: str):
+    """Проверка анализа песни по ссылке или «Артист - Песня» (без сохранения дня)."""
+    from fastapi.concurrency import run_in_threadpool
+
+    from .analyzers.music import analyze_song
+
+    res = await run_in_threadpool(analyze_song, url, None)
+    res.pop("audio_path", None)
+    res["beats_count"] = len(res.get("beats") or [])
+    res["beats"] = (res.get("beats") or [])[:8]
+    return res
 
 
 @app.post("/api/days", response_model=Day)
