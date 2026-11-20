@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 
 import httpx
 
@@ -72,6 +73,11 @@ def _user_prompt(text: str) -> str:
     return f"Текст дня:\n\"\"\"\n{text.strip()[:4000]}\n\"\"\""
 
 
+# перегруженную/закрытую модель пропускаем 5 минут, чтобы не терять секунды на каждом дне
+MODEL_COOLDOWN = 300.0
+_model_down_until: dict[str, float] = {}
+
+
 async def _call_gemini(text: str) -> str:
     contents = []
     for t, ans in FEW_SHOT:
@@ -85,6 +91,9 @@ async def _call_gemini(text: str) -> str:
     }
     # GEMINI_MODEL может быть списком через запятую: модели у Google закрываются, берём первую живую
     models = [m.strip() for m in settings.gemini_model.split(",") if m.strip()]
+    now = time.monotonic()
+    alive = [m for m in models if _model_down_until.get(m, 0) <= now]
+    models = alive or models[-1:]
     async with httpx.AsyncClient(timeout=settings.llm_timeout) as c:
         for i, model in enumerate(models):
             last = i == len(models) - 1
@@ -94,10 +103,12 @@ async def _call_gemini(text: str) -> str:
             except httpx.TimeoutException:
                 if last:
                     raise
+                _model_down_until[model] = time.monotonic() + MODEL_COOLDOWN
                 log.warning("Gemini: %s не ответила вовремя, пробуем следующую", model)
                 continue
             # 404 = модель закрыта, 429 = лимит, 5xx = перегрузка: пробуем следующую модель
             if (r.status_code in (404, 429) or r.status_code >= 500) and not last:
+                _model_down_until[model] = time.monotonic() + MODEL_COOLDOWN
                 log.warning("Gemini: %s ответила %s, пробуем следующую", model, r.status_code)
                 continue
             r.raise_for_status()
