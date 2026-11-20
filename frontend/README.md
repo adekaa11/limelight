@@ -5,12 +5,15 @@ React 18 + Vite + TypeScript + Tailwind. Canvas 2D + WebAudio, без библи
 ```bash
 cd frontend
 npm install
-npm run dev        # http://localhost:5173, без VITE_API_URL работает на моках
+npm run dev        # http://localhost:5173, живой бэк из .env.development
 npm run build
 ```
 
-`.env` (см. `.env.example`): `VITE_API_URL=https://<render>.onrender.com` — живой бэк, пусто — моки из `src/mocks/days.json`.
-Деплой: Vercel, root = `frontend`, SPA-rewrite в `vercel.json`.
+Бэк: `VITE_API_URL=https://proyavka-api.onrender.com` в `.env.development` и `.env.production` (адрес публичный, секретов нет). Без сети: `VITE_USE_MOCK=true` в `.env.local` — моки из `src/mocks/days.json`.
+
+**Деплой на Vercel:** Add New → Project → репозиторий `proyavka`, Root Directory = `frontend`, Framework = Vite (подхватится сам), Environment Variable `VITE_API_URL=https://proyavka-api.onrender.com`. SPA-rewrite уже в `vercel.json`.
+
+**Бесплатный Render засыпает.** Первый запрос после простоя ждёт ~50 с: фронт будит сервер при входе на сайт (`warmUp`), показывает баннер «Будим сервер», повторяет GET на 502/503/504. Создание дня с песней — 1–3,5 мин: экран «Проявляем день» показывает настоящий прогресс загрузки файлов и этапы анализа, фото пользователя проявляется по мере ожидания.
 
 ## Экраны
 
