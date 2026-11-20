@@ -85,7 +85,10 @@ class LocalStorage:
 class SupabaseStorage:
     def __init__(self, url: str, key: str, bucket: str, table: str):
         self.url, self.bucket, self.table = url, bucket, table
-        self.h = {"apikey": key, "Authorization": f"Bearer {key}"}
+        # Новые ключи Supabase (sb_secret_...) идут только в apikey; старый service_role (JWT) ещё и в Bearer
+        self.h = {"apikey": key}
+        if key.startswith("eyJ"):
+            self.h["Authorization"] = f"Bearer {key}"
 
     def _client(self) -> httpx.AsyncClient:
         return httpx.AsyncClient(timeout=60, headers=self.h)

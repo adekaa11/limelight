@@ -91,9 +91,9 @@ Swagger: http://localhost:8000/docs. Тесты: `pytest`.
 
 ## Деплой
 
-1. **Supabase:** создать проект, в SQL Editor выполнить `backend/sql/schema.sql`. Взять `Project URL` и `service_role` ключ (Settings → API).
+1. **Supabase:** создать проект, в SQL Editor выполнить `backend/sql/schema.sql`. Взять `Project URL` и секретный ключ: Project Settings → API Keys → `secret` (`sb_secret_...`) или Legacy → `service_role`.
 2. **Gemini:** ключ в Google AI Studio.
-3. **Render:** New → Blueprint → этот репозиторий (`render.yaml`). Вписать `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `GEMINI_API_KEY`, `PUBLIC_BASE_URL`.
+3. **Render:** New → Blueprint → этот репозиторий (`render.yaml`). Вписать `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `GEMINI_API_KEY`.
 4. **Vercel:** импорт `frontend/`, переменная `VITE_API_URL` = адрес Render.
 
 ## Инструменты
