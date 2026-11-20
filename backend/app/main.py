@@ -67,9 +67,14 @@ MB = 1024 * 1024
 AUDIO_TYPES = ("audio/", "video/webm", "application/octet-stream")
 
 
+PHOTO_EXT = (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif")
+
+
 async def _read(f: UploadFile, kinds: tuple[str, ...], what: str) -> Upload:
     ctype = f.content_type or "application/octet-stream"
-    if not ctype.startswith(kinds):
+    # HEIC часто приходит как application/octet-stream: пропускаем по расширению
+    by_ext = what == "photo" and (f.filename or "").lower().endswith(PHOTO_EXT)
+    if not ctype.startswith(kinds) and not by_ext:
         raise HTTPException(415, f"{what}: неподдерживаемый тип {ctype}")
     data = await f.read()
     if len(data) > settings.max_upload_mb * MB:

@@ -39,6 +39,31 @@ def _ext(name: str, default: str) -> str:
     return suf if suf and len(suf) <= 5 else default
 
 
+MAX_SIDE = 1600
+
+
+def normalize_photo(data: bytes) -> bytes:
+    """Любое фото (в т.ч. HEIC с iPhone) -> JPEG: поворот по EXIF, длинная сторона до 1600 px.
+    Плееру на телефоне не нужны 12-мегапиксельные кадры, а повёрнутые боком фото ломают композицию."""
+    import io
+
+    from PIL import Image, ImageOps
+
+    try:
+        from pillow_heif import register_heif_opener
+
+        register_heif_opener()
+    except ImportError:
+        pass
+    img = ImageOps.exif_transpose(Image.open(io.BytesIO(data)))
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
+    img.thumbnail((MAX_SIDE, MAX_SIDE))
+    out = io.BytesIO()
+    img.save(out, "JPEG", quality=86, optimize=True, progressive=True)
+    return out.getvalue()
+
+
 async def _safe(coro, default, what: str):
     try:
         return await coro
@@ -69,7 +94,13 @@ async def create_day(
         tmpd = Path(tmp)
         photo_paths = []
         for i, ph in enumerate(photos, 1):
-            p = tmpd / f"photo_{i:02d}{_ext(ph.filename, '.jpg')}"
+            try:
+                ph.data = await run_in_threadpool(normalize_photo, ph.data)
+                ph.content_type, ext = "image/jpeg", ".jpg"
+            except Exception as e:  # не картинка или битый файл: сохраняем как есть
+                log.warning("фото %s не нормализовано: %s", ph.filename, e)
+                ext = _ext(ph.filename, ".jpg")
+            p = tmpd / f"photo_{i:02d}{ext}"
             p.write_bytes(ph.data)
             photo_paths.append(str(p))
         song_path = None

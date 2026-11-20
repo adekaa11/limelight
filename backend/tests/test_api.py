@@ -102,3 +102,31 @@ def test_style_preview():
     body = r.json()
     assert body["style"]["technique"] == "collage"
     assert body["style"]["beat_step"] == 4
+
+
+def test_photo_normalized_rotated_and_heic(monkeypatch):
+    """Большое фото с EXIF-поворотом -> JPEG до 1600 px, повёрнутый; HEIC принимается."""
+    from PIL import Image
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+    _no_voice(monkeypatch)
+    big = Image.new("RGB", (3000, 2000), (120, 80, 40))
+    exif = big.getexif()
+    exif[0x0112] = 6  # повернуть на 90°
+    b1 = io.BytesIO()
+    big.save(b1, "JPEG", exif=exif)
+    b2 = io.BytesIO()
+    Image.new("RGB", (800, 600), (40, 80, 120)).save(b2, "HEIF")
+    r = client.post("/api/days", data={"text": TEXT}, files=[
+        ("photos", ("big.jpg", b1.getvalue(), "image/jpeg")),
+        ("photos", ("IMG_0001.HEIC", b2.getvalue(), "application/octet-stream")),
+    ])
+    assert r.status_code == 200, r.text
+    day = r.json()
+    assert all(u.endswith(".jpg") for u in day["photos"])
+    from app.main import storage
+    data = __import__("asyncio").run(storage.get_file(day["folder"] + "/photos/01.jpg"))
+    img = Image.open(io.BytesIO(data))
+    assert img.size == (1067, 1600)  # повёрнуто и уменьшено
+    assert len(day["photo_analysis"][1]["dominant_colors"]) >= 1
