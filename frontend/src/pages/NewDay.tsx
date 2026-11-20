@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { createDay, USE_MOCK } from "../api";
+import { createDay, getServerState, USE_MOCK, warmUp } from "../api";
+import DevelopingScreen, { type Phase } from "../components/DevelopingScreen";
 import { todayIso } from "../lib/date";
 
 const HINTS = [
@@ -12,7 +13,6 @@ const HINTS = [
   { label: "мелочь", text: "Запомнилась мелочь: " },
 ];
 
-const STAGES = ["Слушаем песню", "Смотрим на свет в фото", "Читаем, как прошёл день", "Подбираем название", "Проявляем страницу"];
 const MAX_PHOTOS = 8;
 const MAX_MB = 20;
 
@@ -26,8 +26,8 @@ export default function NewDay() {
   const [songFile, setSongFile] = useState<File | null>(null);
   const [date, setDate] = useState(todayIso());
   const [drag, setDrag] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [stage, setStage] = useState(0);
+  const [phase, setPhase] = useState<Phase | "form">("form");
+  const [upload, setUpload] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
@@ -36,13 +36,6 @@ export default function NewDay() {
     setPreviews(urls);
     return () => urls.forEach((u) => URL.revokeObjectURL(u));
   }, [photos]);
-
-  useEffect(() => {
-    if (!busy) return;
-    setStage(0);
-    const id = setInterval(() => setStage((s) => Math.min(STAGES.length - 1, s + 1)), 2600);
-    return () => clearInterval(id);
-  }, [busy]);
 
   const addFiles = (list: FileList | File[]) => {
     const imgs = [...list].filter((f) => f.type.startsWith("image/"));
@@ -72,38 +65,46 @@ export default function NewDay() {
   const ready = text.trim().length >= 10 && photos.length > 0 && hasSong;
 
   const submit = async () => {
-    if (!ready || busy) return;
+    if (!ready || (phase !== "form" && phase !== "error")) return;
     setError(null);
-    setBusy(true);
     try {
-      const day = await createDay({
-        text: text.trim(),
-        photos,
-        song_url: songMode === "url" ? songUrl.trim() : undefined,
-        song_file: songMode === "file" ? songFile : null,
-        date,
-      });
-      nav(`/day/${day.id}`, { state: { fresh: true } });
+      if (getServerState() !== "ready") {
+        setPhase("wake");
+        if (!(await warmUp())) throw new Error("Сервер не проснулся. Проверьте интернет и попробуйте ещё раз.");
+      }
+      setPhase("upload");
+      setUpload(0);
+      const day = await createDay(
+        {
+          text: text.trim(),
+          photos,
+          song_url: songMode === "url" ? songUrl.trim() : undefined,
+          song_file: songMode === "file" ? songFile : null,
+          date,
+        },
+        (p) => {
+          setUpload(p.upload);
+          if (p.processing) setPhase("processing");
+        },
+      );
+      setPhase("done");
+      setTimeout(() => nav(`/day/${day.id}`, { state: { fresh: true } }), 700);
     } catch (e) {
       setError((e as Error).message || "Не получилось сохранить день");
-      setBusy(false);
+      setPhase("error");
     }
   };
 
-  if (busy)
-    return (
-      <div className="mx-auto max-w-md py-24 text-center">
-        <div className="mx-auto mb-10 aspect-[9/16] w-40 animate-pulse rounded-sm bg-gradient-to-b from-paper2 to-[#e2d6c2] shadow-inner" />
-        <ol className="space-y-2 text-left">
-          {STAGES.map((s, i) => (
-            <li key={s} className={`flex items-center gap-3 font-serif text-xl transition ${i < stage ? "text-muted line-through decoration-1" : i === stage ? "text-ink" : "text-ink/25"}`}>
-              <span className="w-5 text-center font-sans text-sm">{i < stage ? "✓" : i === stage ? "…" : "·"}</span>
-              {s}
-            </li>
-          ))}
-        </ol>
-      </div>
-    );
+  // не дать случайно закрыть вкладку посреди создания
+  useEffect(() => {
+    if (phase === "form" || phase === "error" || phase === "done") return;
+    const h = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", h);
+    return () => window.removeEventListener("beforeunload", h);
+  }, [phase]);
+
+  if (phase !== "form")
+    return <DevelopingScreen phase={phase} upload={upload} photo={previews[0]} error={error} onRetry={submit} onBack={() => setPhase("form")} />;
 
   return (
     <div className="mx-auto max-w-3xl">

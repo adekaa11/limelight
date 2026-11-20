@@ -1,5 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { USE_MOCK } from "../api";
+import { USE_MOCK, warmUp } from "../api";
+import { useEffect } from "react";
+import ServerBanner from "./ServerBanner";
 
 const links = [
   { to: "/", label: "Архив" },
@@ -8,6 +10,8 @@ const links = [
 ];
 
 export default function Layout() {
+  // будим Render сразу при входе: пока человек смотрит архив или пишет о дне, сервер успеет проснуться
+  useEffect(() => void warmUp(), []);
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-paper/90 backdrop-blur">
@@ -34,6 +38,7 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        <ServerBanner />
       </header>
       <main className="mx-auto max-w-6xl px-4 pb-20 pt-6">
         <Outlet />

@@ -11,3 +11,4 @@ dist/
 *.webm
 !frontend/public/**/*.webm
 *.tsbuildinfo
+.env.local

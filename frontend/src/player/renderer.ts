@@ -13,6 +13,7 @@ import { inkFor, luma, mixHex } from "../lib/color";
 import { ageDays, fadeForAge } from "../lib/date";
 import { clamp, lerp, smoothstep } from "../lib/math";
 import { hashString } from "../lib/rng";
+import { plural } from "../lib/plural";
 
 export const TECH: Record<Technique, TechniqueRenderer> = { monet, kandinsky, film, collage, japanese };
 
@@ -94,10 +95,10 @@ export class Renderer {
     const f = fadeForAge(age);
     const out = [
       `смена кадра каждые ${this.interval.toFixed(2)} с — ровно на биты песни`,
-      `${this.secs.length} частей песни -> ${this.secs.length} сцены`,
-      `возраст записи ${age} дн. -> выцветание ${Math.round(f * 100)}%; при открытии 3 с проявления, остаётся ${Math.round(f * RESTORED * 100)}%`,
+      `${plural(this.secs.length, "часть", "части", "частей")} песни -> ${plural(this.secs.length, "сцена", "сцены", "сцен")}`,
+      `возраст записи ${plural(age, "день", "дня", "дней")} -> выцветание ${Math.round(f * 100)}%; при открытии 3 с проявления, остаётся ${Math.round(f * RESTORED * 100)}%`,
     ];
-    if (this.day.text_analysis.details.length) out.push(`${this.day.text_analysis.details.length} детали из текста -> заметки от руки на полях`);
+    if (this.day.text_analysis.details.length) out.push(`${plural(this.day.text_analysis.details.length, "деталь", "детали", "деталей")} из текста -> заметки от руки на полях`);
     if (this.weather) out.push(this.weather === "rain" ? "дождь в тексте -> тонкие косые линии дождя" : "снег в тексте -> медленные точки снега");
     if (this.day.song?.analysis.mode === "minor") out.push("минор -> фото дополнительно теряют 25% насыщенности");
     return out.concat(this.tech.rules?.(this.day, this.prepEnv) ?? []);
