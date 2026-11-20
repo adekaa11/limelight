@@ -20,6 +20,7 @@ from .config import ASTANA_TZ
 from .slug import folder_name
 from .storage import Storage
 from .style_engine import build_style
+from . import text_analysis
 from .text_analysis import analyze_text
 
 log = logging.getLogger(__name__)
@@ -214,6 +215,7 @@ async def create_day(
         "folder": folder,
         "video_url": None,
         "meta": {"llm": llm_src, "song_source": song_raw.get("source", "fallback"),
+                 **({"llm_error": text_analysis.last_error} if llm_src == "fallback" else {}),
                  "timings": {**tm.total(), **{f"song_{k}": v for k, v in (song_raw.get("timings") or {}).items()}}},
         "created_at": datetime.now(ASTANA_TZ).isoformat(),
     }

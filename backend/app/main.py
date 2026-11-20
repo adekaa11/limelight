@@ -88,7 +88,7 @@ async def health():
 
 
 @app.get("/api/health/deps")
-async def health_deps(voice_name: str = "ru-RU-SvetlanaNeural", rate: str = "+0%", pitch: str = "+0Hz", text: str = "Проверка голоса."):
+async def health_deps(llm: str = "", voice_name: str = "ru-RU-SvetlanaNeural", rate: str = "+0%", pitch: str = "+0Hz", text: str = "Проверка голоса."):
     """Проверка внешних зависимостей: LLM и озвучка. Ключи в ответ не попадают."""
     import tempfile
     from pathlib import Path
@@ -98,7 +98,7 @@ async def health_deps(voice_name: str = "ru-RU-SvetlanaNeural", rate: str = "+0%
     from .analyzers.voice import synthesize_voice
     from .text_analysis import probe_llm
 
-    llm = await probe_llm()
+    llm_res = await probe_llm(llm or None)
     with tempfile.TemporaryDirectory() as tmp:
         out = str(Path(tmp) / "v.mp3")
         try:
@@ -108,7 +108,7 @@ async def health_deps(voice_name: str = "ru-RU-SvetlanaNeural", rate: str = "+0%
             voice = {"ok": bool(res) and Path(out).is_file(), "bytes": Path(out).stat().st_size if Path(out).is_file() else 0}
         except Exception as e:
             voice = {"ok": False, "error": f"{type(e).__name__}: {e}"[:400]}
-    return {"llm": llm, "voice": voice}
+    return {"llm": llm_res, "voice": voice}
 
 
 @app.get("/api/health/song")

@@ -316,9 +316,11 @@ def fallback_analysis(text: str) -> tuple[dict, str, str]:
 
 # ---------- вход ----------
 
-async def probe_llm() -> dict:
+last_error = ""  # причина последнего ухода в fallback, пишется в meta дня
+
+async def probe_llm(provider: str | None = None) -> dict:
     """Диагностика для /api/health/deps: реальный вызов LLM, ошибка возвращается текстом."""
-    provider = settings.llm_provider
+    provider = provider or settings.llm_provider
     try:
         if provider == "gemini" and settings.gemini_api_key:
             raw = await _call_gemini("Утром пили чай на балконе, пахло дождём.")
@@ -341,10 +343,10 @@ async def analyze_text(text: str) -> tuple[dict, str, str, str]:
         if provider == "gemini" and settings.gemini_api_key:
             try:
                 raw = await _call_gemini(text)
-            except Exception:
+            except Exception as ge:
                 if not settings.groq_api_key:
                     raise
-                log.warning("Gemini недоступен, переключаемся на Groq")
+                log.warning("Gemini недоступен (%s), переключаемся на Groq", ge)
                 raw, provider = await _call_groq(text), "groq"
         elif provider == "groq" and settings.groq_api_key:
             raw = await _call_groq(text)
@@ -353,6 +355,8 @@ async def analyze_text(text: str) -> tuple[dict, str, str, str]:
         ta, title, caption = normalize(_extract_json(raw), text)
         return ta, title, caption, provider
     except Exception as e:  # сеть, лимиты, кривой JSON -> правила
-        log.warning("LLM недоступен (%s), работаем на правилах", e)
+        global last_error
+        last_error = f"{type(e).__name__}: {e}"[:200]
+        log.warning("LLM недоступен (%s), работаем на правилах", last_error)
         ta, title, caption = fallback_analysis(text)
         return ta, title, caption, "fallback"
