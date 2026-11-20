@@ -118,23 +118,49 @@ async def _call_gemini(text: str) -> str:
     raise RuntimeError("нет доступной модели Gemini")
 
 
+GROQ_PREFER = ("gpt-oss-120b", "llama-4-maverick", "llama-4", "qwen", "kimi", "70b", "gpt-oss")
+_groq_model: str | None = None  # найденная рабочая модель (модели у Groq часто выводят из эксплуатации)
+
+
+async def _groq_pick_model(c: httpx.AsyncClient, headers: dict) -> str | None:
+    r = await c.get("https://api.groq.com/openai/v1/models", headers=headers)
+    r.raise_for_status()
+    ids = [m["id"] for m in r.json().get("data", []) if m.get("active", True)]
+    ids = [i for i in ids if not any(x in i for x in ("whisper", "tts", "guard", "embed", "vision"))]
+    for pref in GROQ_PREFER:
+        for i in ids:
+            if pref in i:
+                return i
+    return ids[0] if ids else None
+
+
 async def _call_groq(text: str) -> str:
+    global _groq_model
     msgs = [{"role": "system", "content": SYSTEM_PROMPT}]
     for t, ans in FEW_SHOT:
         msgs.append({"role": "user", "content": _user_prompt(t)})
         msgs.append({"role": "assistant", "content": json.dumps(ans, ensure_ascii=False)})
     msgs.append({"role": "user", "content": _user_prompt(text)})
+    headers = {"Authorization": f"Bearer {settings.groq_api_key}"}
     async with httpx.AsyncClient(timeout=settings.llm_timeout) as c:
-        r = await c.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={"Authorization": f"Bearer {settings.groq_api_key}"},
-            json={
-                "model": settings.groq_model, "messages": msgs, "temperature": 0.4,
-                "response_format": {"type": "json_object"},
-            },
-        )
-        r.raise_for_status()
-        return r.json()["choices"][0]["message"]["content"]
+        model = _groq_model or settings.groq_model
+        for attempt in range(2):
+            r = await c.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=headers,
+                json={"model": model, "messages": msgs, "temperature": 0.4,
+                      "response_format": {"type": "json_object"}},
+            )
+            if r.status_code in (400, 404) and attempt == 0 and "model" in r.text:
+                picked = await _groq_pick_model(c, headers)
+                if picked and picked != model:
+                    log.warning("Groq: модель %s недоступна, берём %s", model, picked)
+                    model = picked
+                    continue
+            r.raise_for_status()
+            _groq_model = model
+            return r.json()["choices"][0]["message"]["content"]
+    raise RuntimeError("Groq: нет доступной модели")
 
 
 def _extract_json(raw: str) -> dict:
@@ -328,7 +354,7 @@ async def probe_llm(provider: str | None = None) -> dict:
             raw = await _call_groq("Утром пили чай на балконе, пахло дождём.")
         else:
             return {"ok": False, "provider": provider, "error": "ключ не задан"}
-        return {"ok": True, "provider": provider, "model": settings.gemini_model if provider == "gemini" else settings.groq_model,
+        return {"ok": True, "provider": provider, "model": settings.gemini_model if provider == "gemini" else (_groq_model or settings.groq_model),
                 "sample": _extract_json(raw).get("title")}
     except httpx.HTTPStatusError as e:
         return {"ok": False, "provider": provider, "status": e.response.status_code, "error": e.response.text[:400]}
