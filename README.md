@@ -105,7 +105,7 @@ Swagger: http://localhost:8000/docs. Тесты: `pytest`.
 | Анализ текста | Gemini API (резерв: Groq), строгий JSON |
 | Музыка | Deezer API (поиск, 30-сек превью), librosa (BPM, биты, части, лад, энергия) |
 | Фото | Pillow, k-means |
-| Озвучка | edge-tts (ru-RU-SvetlanaNeural, DmitryNeural, DariyaNeural) |
+| Озвучка | edge-tts (ru-RU-SvetlanaNeural, ru-RU-DmitryNeural) |
 | Фронт | React, Vite, TypeScript, Tailwind, Canvas 2D, WebAudio, MediaRecorder, react-pageflip |
 | Деплой | Render (бэк), Vercel (фронт) |
 
