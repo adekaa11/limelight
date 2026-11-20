@@ -23,6 +23,7 @@ from .text_analysis import analyze_text
 
 log = logging.getLogger(__name__)
 
+FALLBACK_VOICE = "ru-RU-SvetlanaNeural"
 SONG_KEYS = ("bpm", "mode", "energy", "valence", "genre", "year", "beats", "sections")
 
 
@@ -92,6 +93,11 @@ async def create_day(
         # 3. озвучка
         voice_path = str(tmpd / "voice.mp3")
         voice_out = await _safe(run_in_threadpool(synthesize_voice, text, voice, voice_path), "", "synthesize_voice")
+        if not voice_out and voice["name"] != FALLBACK_VOICE:
+            # голос недоступен: тот же темп и высота, но базовым голосом
+            voice = {**voice, "name": FALLBACK_VOICE}
+            explanation.append(f"голос недоступен -> {FALLBACK_VOICE}")
+            voice_out = await _safe(run_in_threadpool(synthesize_voice, text, voice, voice_path), "", "synthesize_voice")
         voice_url = None
         if voice_out and Path(voice_out).is_file():
             voice_url = await storage.put_file(f"{folder}/voice.mp3", Path(voice_out).read_bytes(), "audio/mpeg")

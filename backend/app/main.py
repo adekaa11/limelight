@@ -57,7 +57,7 @@ async def health():
 
 
 @app.get("/api/health/deps")
-async def health_deps():
+async def health_deps(voice_name: str = "ru-RU-SvetlanaNeural"):
     """Проверка внешних зависимостей: LLM и озвучка. Ключи в ответ не попадают."""
     import tempfile
     from pathlib import Path
@@ -72,7 +72,7 @@ async def health_deps():
         out = str(Path(tmp) / "v.mp3")
         try:
             res = await run_in_threadpool(
-                synthesize_voice, "Проверка голоса.", {"name": "ru-RU-SvetlanaNeural", "rate": "+0%", "pitch": "+0Hz", "_raise": True}, out
+                synthesize_voice, "Проверка голоса.", {"name": voice_name, "rate": "+0%", "pitch": "+0Hz", "_raise": True}, out
             )
             voice = {"ok": bool(res) and Path(out).is_file(), "bytes": Path(out).stat().st_size if Path(out).is_file() else 0}
         except Exception as e:
