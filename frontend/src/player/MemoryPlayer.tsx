@@ -80,6 +80,28 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
     dirtyRef.current = true;
   }, [pageNumber, ageDaysOverride]);
 
+  // вкладка скрыта или страница выгружается -> пауза (уход со страницы дня = размонтирование, звук гасится выше).
+  // Во время экспорта не трогаем: запись должна дойти до конца.
+  useEffect(() => {
+    const pauseIfHidden = () => {
+      const eng = engineRef.current;
+      if (!eng || recRef.current || stateRef.current !== "playing") return;
+      if (document.visibilityState === "hidden") {
+        eng.pause();
+        setState("paused");
+      }
+    };
+    const onPageHide = () => {
+      if (!recRef.current) engineRef.current?.pause();
+    };
+    document.addEventListener("visibilitychange", pauseIfHidden);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", pauseIfHidden);
+      window.removeEventListener("pagehide", onPageHide);
+    };
+  }, [setState]);
+
   // цикл отрисовки, не чаще 30 fps
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");

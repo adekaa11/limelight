@@ -259,13 +259,22 @@ function Meter({ label, v }: { label: string; v: number }) {
 function VoiceButton({ day }: { day: Day }) {
   const [on, setOn] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
-  useEffect(
-    () => () => {
+  // уход со страницы дня, смена дня или скрытие вкладки -> озвучка останавливается
+  useEffect(() => {
+    const stop = () => {
       audio.current?.pause();
       if ("speechSynthesis" in window) speechSynthesis.cancel();
-    },
-    [day.id],
-  );
+      setOn(false);
+    };
+    const onHide = () => document.visibilityState === "hidden" && stop();
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", stop);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", stop);
+      stop();
+    };
+  }, [day.id]);
   const toggle = () => {
     if (on) {
       audio.current?.pause();
