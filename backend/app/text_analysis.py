@@ -74,7 +74,7 @@ def _user_prompt(text: str) -> str:
 
 
 # перегруженную/закрытую модель пропускаем 5 минут, чтобы не терять секунды на каждом дне
-MODEL_COOLDOWN = 300.0
+MODEL_COOLDOWN = 1800.0
 _model_down_until: dict[str, float] = {}
 
 
@@ -99,7 +99,9 @@ async def _call_gemini(text: str) -> str:
             last = i == len(models) - 1
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
             try:
-                r = await c.post(url, json=body, headers={"x-goog-api-key": settings.gemini_api_key})
+                # не последней модели даём меньше времени: дальше есть запасные
+                r = await c.post(url, json=body, headers={"x-goog-api-key": settings.gemini_api_key},
+                                 timeout=settings.llm_timeout if last else 15.0)
             except httpx.TimeoutException:
                 if last:
                     raise
