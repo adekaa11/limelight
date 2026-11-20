@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+venv/
+backend/data/
+.pytest_cache/
+node_modules/
+dist/
+.DS_Store
+*.webm
+!frontend/public/**/*.webm
