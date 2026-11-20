@@ -28,6 +28,7 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
   const rendererRef = useRef<Renderer | null>(null);
   const engineRef = useRef<AudioEngine | null>(null);
   const recRef = useRef<ReturnType<typeof startRecording> | null>(null);
+  const abortRef = useRef<string | null>(null); // причина прерванной записи: недописанное видео не скачиваем и не отправляем
   const progressRef = useRef<((p: number) => void) | undefined>(undefined);
   const stateRef = useRef<State>("loading");
   const dirtyRef = useRef(true);
@@ -65,10 +66,17 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleKey, W]);
 
+  const abortRecording = useCallback((reason: string) => {
+    if (!recRef.current) return;
+    abortRef.current = reason;
+    engineRef.current?.pause();
+    recRef.current.stop();
+  }, []);
+
   // звук — свой на каждую песню
   useEffect(() => {
     return () => {
-      recRef.current?.stop();
+      abortRecording("Запись прервана: вы ушли со страницы дня");
       engineRef.current?.destroy();
       engineRef.current = null;
       if (stateRef.current !== "loading") setState("ready");
@@ -81,18 +89,22 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
   }, [pageNumber, ageDaysOverride]);
 
   // вкладка скрыта или страница выгружается -> пауза (уход со страницы дня = размонтирование, звук гасится выше).
-  // Во время экспорта не трогаем: запись должна дойти до конца.
+  // Во время экспорта скрытие вкладки прерывает запись: браузер душит кадры и звук, видео вышло бы рваным.
   useEffect(() => {
     const pauseIfHidden = () => {
       const eng = engineRef.current;
-      if (!eng || recRef.current || stateRef.current !== "playing") return;
-      if (document.visibilityState === "hidden") {
+      if (!eng || document.visibilityState !== "hidden") return;
+      if (recRef.current) {
+        abortRecording("Запись остановлена: вкладку свернули. На время записи (до 30 с) оставайтесь на этой вкладке.");
+        setState("ended");
+      } else if (stateRef.current === "playing") {
         eng.pause();
         setState("paused");
       }
     };
     const onPageHide = () => {
-      if (!recRef.current) engineRef.current?.pause();
+      abortRecording("Запись прервана: страница закрылась");
+      engineRef.current?.pause();
     };
     document.addEventListener("visibilitychange", pauseIfHidden);
     window.addEventListener("pagehide", onPageHide);
@@ -100,7 +112,7 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
       document.removeEventListener("visibilitychange", pauseIfHidden);
       window.removeEventListener("pagehide", onPageHide);
     };
-  }, [setState]);
+  }, [setState, abortRecording]);
 
   // цикл отрисовки, не чаще 30 fps
   useEffect(() => {
@@ -178,20 +190,46 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
         if (!canvas || !rendererRef.current) throw new Error("Плеер ещё не готов");
         const eng = ensureEngine();
         await eng.load();
-        if (eng.ctx.state !== "running") await eng.ctx.resume();
+        if (eng.ctx.state !== "running") {
+          // без настоящего клика браузер не включает звук и resume() не завершается
+          await Promise.race([eng.ctx.resume(), new Promise((r) => setTimeout(r, 3000))]);
+          if ((eng.ctx.state as AudioContextState) !== "running") throw new Error("Браузер не дал включить звук. Нажмите «Экспорт видео» ещё раз.");
+        }
+        abortRef.current = null;
         const rec = startRecording(canvas, eng.dest.stream);
         recRef.current = rec;
         progressRef.current = onProgress;
+        // сторож на таймере, а не на rAF: конец записи и зависший звук ловим, даже если кадры притормозил браузер
+        let lastT = -1, lastMove = Date.now();
+        const watchdog = setInterval(() => {
+          if (stateRef.current !== "playing") return;
+          const t = eng.time();
+          if (t >= eng.duration - 0.05) {
+            eng.pause();
+            rec.stop();
+            setState("ended");
+          } else if (t !== lastT) {
+            lastT = t;
+            lastMove = Date.now();
+          } else if (Date.now() - lastMove > 6000) {
+            abortRecording("Запись остановлена: песня перестала играть (сеть или браузер). Попробуйте ещё раз.");
+            setState("ended");
+          }
+        }, 500);
         try {
           await open();
-          return await rec.done;
+          const blob = await rec.done;
+          if (abortRef.current) throw new Error(abortRef.current);
+          return blob;
         } finally {
+          clearInterval(watchdog);
           recRef.current = null;
           progressRef.current = undefined;
+          abortRef.current = null;
         }
       },
     }),
-    [open, ensureEngine],
+    [open, ensureEngine, abortRecording, setState],
   );
 
   return (

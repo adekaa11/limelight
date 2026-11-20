@@ -41,9 +41,13 @@ export default function DayView() {
     try {
       const blob = await player.current.exportVideo((p) => setExporting(p));
       downloadBlob(blob, `${day.folder ?? day.title}.webm`);
-      const updated = await uploadMemory(day.id, blob).catch(() => null);
-      if (updated) setDay(updated);
-      setExportMsg(updated ? "Видео сохранено в папку дня" : "Видео скачано");
+      setExporting(null);
+      setExportMsg(USE_MOCK ? "Видео скачано" : `Видео скачано (${(blob.size / 1048576).toFixed(1)} МБ), сохраняем в папку дня…`);
+      if (!USE_MOCK) {
+        const updated = await uploadMemory(day.id, blob).catch(() => null);
+        if (updated) setDay(updated);
+        setExportMsg(updated ? "Видео скачано и сохранено в папку дня (memory.webm)" : "Видео скачано, но в папку дня не сохранилось — попробуйте ещё раз");
+      }
     } catch (e) {
       setExportMsg((e as Error).message);
     } finally {
@@ -81,7 +85,8 @@ export default function DayView() {
               {exporting !== null ? `● запись ${Math.round(exporting * 100)}%` : "⏺ Экспорт видео"}
             </button>
           </div>
-          {exportMsg && <p className="mt-2 text-center text-xs text-muted">{exportMsg}</p>}
+          {exporting !== null && <p className="mt-2 text-center text-xs text-muted">Пишем видео в реальном времени (до 30 с). Не сворачивайте вкладку.</p>}
+          {exportMsg && exporting === null && <p className="mt-2 text-center text-xs text-muted">{exportMsg}</p>}
           {day.video_url && (
             <p className="mt-2 text-center text-xs">
               <a className="underline" href={day.video_url} target="_blank" rel="noreferrer">

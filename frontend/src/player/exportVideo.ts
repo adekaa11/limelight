@@ -10,7 +10,7 @@ export function startRecording(canvas: HTMLCanvasElement, audio: MediaStream | n
   const stream = canvas.captureStream(30);
   audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
   const mimeType = pickMime();
-  const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 6_000_000, audioBitsPerSecond: 160_000 });
+  const rec = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 3_000_000, audioBitsPerSecond: 160_000 });
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
   const done = new Promise<Blob>((res) => {
