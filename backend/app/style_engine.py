@@ -209,24 +209,80 @@ def pick_technique(f: dict) -> tuple[str, list[tuple[int, str]], dict[str, int]]
 
 # ---------- палитра ----------
 
-def _base_hue(f: dict) -> tuple[float, list[str]]:
+def _rgb(h: str) -> tuple[int, int, int]:
+    h = h.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+# Цвета смешиваются в OKLab: так оранжевый + синий дают приглушённый серо-синий, как в красках,
+# а не зелёный (что получается при повороте оттенка по кругу HSL).
+
+def _lin(c: float) -> float:
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _gam(c: float) -> float:
+    c = max(0.0, min(1.0, c))
+    return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+
+
+def hex_to_oklab(h: str) -> tuple[float, float, float]:
+    r, g, b = (_lin(v / 255) for v in _rgb(h))
+    l_ = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
+    m_ = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
+    s_ = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    return (
+        0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+        1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+        0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_,
+    )
+
+
+def oklab_to_hex(L: float, a: float, b: float) -> str:
+    l_ = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+    m_ = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+    s_ = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3
+    r = 4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_
+    g = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_
+    bl = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_
+    return "#{:02x}{:02x}{:02x}".format(*(round(_gam(v) * 255) for v in (r, g, bl)))
+
+
+def _mix(p: tuple, q: tuple, t: float) -> tuple[float, float, float]:
+    return tuple(x + (y - x) * t for x, y in zip(p, q))  # type: ignore[return-value]
+
+
+WARM = hex_to_oklab("#d9822b")  # тёплый янтарь
+COOL = hex_to_oklab("#3a6ea5")  # холодная синь
+TIME_TINT = {  # (цвет времени суток, сила)
+    "утро": (hex_to_oklab("#f1e3c4"), 0.15),
+    "вечер": (hex_to_oklab("#d9733b"), 0.25),
+    "ночь": (hex_to_oklab("#23304f"), 0.5),
+}
+
+
+def _base_color(f: dict) -> tuple[tuple[float, float, float], list[str]]:
+    """Целевой цвет настроения в OKLab: сезон -> время суток -> валентность."""
     why: list[str] = []
     if f["season"] in SEASON_HUE:
         hue = SEASON_HUE[f["season"]]
         why.append(f"{f['season']} -> базовый оттенок {hue}°")
     else:
         hue = NEUTRAL_HUE
+    base = hex_to_oklab(hls_to_hex(hue, 0.5, 0.55))
     if f["time"] in TIME_SHIFT:
-        hue = (hue + TIME_SHIFT[f["time"]]["hue"]) % 360
         why.append(TIME_SHIFT[f["time"]]["label"])
-    # валентность тянет оттенок к тёплому (30°) или холодному (215°)
+        if f["time"] in TIME_TINT:
+            tint, k = TIME_TINT[f["time"]]
+            base = _mix(base, tint, k)
+    if f["rain"]:
+        base = _mix(base, COOL, 0.35)
+        why.append("дождь/снег/туман -> палитра холоднее")
     V = f["valence"]
-    if V >= 0.5:
-        hue = _hue_lerp(hue, 30, (V - 0.5) * 0.8)
-    else:
-        hue = _hue_lerp(hue, 215, (0.5 - V) * 0.8)
+    w = abs(V - 0.5) * 0.8
+    base = _mix(base, WARM if V >= 0.5 else COOL, w)
     why.append(f"валентность {V:.2f} -> {'теплее' if V >= 0.5 else 'холоднее'} палитра")
-    return hue, why
+    return base, why
 
 
 def _photo_colors(pa: list[dict]) -> list[str]:
@@ -238,11 +294,6 @@ def _photo_colors(pa: list[dict]) -> list[str]:
             if i < len(lst) and lst[i].lower() not in out:
                 out.append(lst[i].lower())
     return out
-
-
-def _rgb(h: str) -> tuple[int, int, int]:
-    h = h.lstrip("#")
-    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
 
 def _dedupe(colors: list[str], min_dist: float = 28.0) -> list[str]:
@@ -272,55 +323,64 @@ def _pick_accents(colors: list[tuple[float, float, float]], n: int) -> list[tupl
     return picked
 
 
-def build_palette(f: dict, pa: list[dict]) -> tuple[list[str], list[str]]:
+SEPIA = hex_to_oklab("#b08a5a")
+
+
+def build_palette(f: dict, pa: list[dict], technique: str = "") -> tuple[list[str], list[str]]:
     why: list[str] = []
-    target_hue, hue_why = _base_hue(f)
-    why += hue_why
+    target, base_why = _base_color(f)
+    why += base_why
+    if technique == "film":
+        target = _mix(target, SEPIA, 0.5)
+        why.append("плёнка -> сдвиг палитры к сепии")
     E, mode = f["energy"], f["mode"]
 
     src = _photo_colors(pa)
     if src:
         why.append("палитра = 60% цветов фото + 40% сдвиг по настроению")
     else:
-        # без фото: аналоговая гамма вокруг базового оттенка
-        src = [
-            hls_to_hex(target_hue + d, l, s)
-            for d, l, s in ((0, 0.55, 0.45), (25, 0.45, 0.5), (-30, 0.65, 0.35), (180, 0.4, 0.3), (10, 0.3, 0.4))
-        ]
-        why.append("фото нет -> палитра строится от базового оттенка")
+        # без фото: вариации базового цвета по светлоте и насыщенности
+        L0, a0, b0 = target
+        src = [oklab_to_hex(L, a0 * k, b0 * k) for L, k in ((0.62, 1.0), (0.48, 1.2), (0.75, 0.7), (0.35, 0.9), (0.85, 0.5))]
+        why.append("фото нет -> палитра строится от базового цвета")
     src = _dedupe(src)
     base_n, k = len(src), 0
     while len(src) < 5:  # дополняем вариациями светлоты исходных цветов
-        h, l, s = hex_to_hls(src[k % base_n])
+        h, l, sat = hex_to_hls(src[k % base_n])
         shift = (0.22, -0.22, 0.4, -0.4)[(k // base_n) % 4]
-        src.append(hls_to_hex(h, _clamp(l + shift, 0.08, 0.95), s))
+        src.append(hls_to_hex(h, _clamp(l + shift, 0.08, 0.95), sat))
         k += 1
 
-    sat_k = 1.0
+    chroma_k = 1.0
     if mode == "minor":
-        sat_k = 0.75
+        chroma_k = 0.75
         why.append("минор -> насыщенность −25%, больше пустоты")
     elif mode == "major":
-        sat_k = 1.08
+        chroma_k = 1.08
         why.append("мажор -> теплее и плотнее")
     contrast = 0.8 + 0.5 * E  # energy -> разброс светлоты
 
-    mixed = []
+    mixed_lab = []
     for c in src[:10]:
-        h, l, s = hex_to_hls(c)
-        h2 = _hue_lerp(h, target_hue, 0.4)
+        L, a, b = hex_to_oklab(c)
+        # 60% цвет фото + 40% цвет настроения; светлота остаётся от фото
+        a2, b2 = 0.6 * a + 0.4 * target[1], 0.6 * b + 0.4 * target[2]
         if mode == "major":
-            h2 = _hue_lerp(h2, 30, 0.08)
-        s2 = _clamp((0.6 * s + 0.4 * 0.55) * sat_k)
-        l2 = _clamp(0.5 + (l - 0.5) * contrast, 0.06, 0.96)
-        mixed.append((h2, l2, s2))
+            a2, b2 = a2 + (WARM[1] - a2) * 0.08, b2 + (WARM[2] - b2) * 0.08
+        L2 = max(0.18, min(0.95, 0.6 + (L - 0.6) * contrast))
+        mixed_lab.append((L2, a2 * chroma_k, b2 * chroma_k))
+    mixed = [hex_to_hls(oklab_to_hex(*c)) for c in mixed_lab]
 
-    # palette[0] = фон: светлый «бумажный» днём, тёмный ночью
-    bg_light = TIME_SHIFT.get(f["time"] or "", {}).get("light", 0.9)
-    bh = _hue_lerp(target_hue, mixed[0][0], 0.3)
-    bg = (bh, bg_light, 0.25 if f["time"] != "ночь" else 0.3)
+    # palette[0] = фон: светлый «бумажный» днём, тёмный ночью, с лёгким оттенком дня
+    night = f["time"] == "ночь"
+    bg_ab = _mix(target, mixed_lab[0], 0.3)
+    if night:
+        bg_ab = _mix(bg_ab, TIME_TINT["ночь"][0], 0.6)
+    bg_L = {"ночь": 0.2, "вечер": 0.86}.get(f["time"] or "", 0.94)
+    bg_c = 0.8 if night else 0.18  # насколько фон окрашен
+    bg = oklab_to_hex(bg_L, bg_ab[1] * bg_c, bg_ab[2] * bg_c)
     accents = _pick_accents(mixed, 4)
-    palette = [hls_to_hex(*bg)] + [hls_to_hex(*a) for a in accents]
+    palette = [bg] + [hls_to_hex(*a) for a in accents]
     return palette, why
 
 
@@ -381,7 +441,7 @@ def build_style(
         expl.append("песня не распознана -> ритм кадров по энергии текста")
 
     # 3. палитра
-    palette, pal_why = build_palette(f, pa)
+    palette, pal_why = build_palette(f, pa, technique)
     expl += pal_why
 
     # 4. зерно: техника + возраст песни

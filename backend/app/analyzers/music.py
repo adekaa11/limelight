@@ -106,6 +106,27 @@ def _deezer_track(c: httpx.Client, track_id: str | None, query: str) -> dict | N
     return None
 
 
+def _first_year(c: httpx.Client, artist: str, title: str) -> int | None:
+    """Год первого релиза записи по MusicBrainz: Deezer часто отдаёт переиздание или сборник."""
+    try:
+        q = f'recording:"{title}" AND artist:"{artist}"'
+        r = c.get(
+            "https://musicbrainz.org/ws/2/recording",
+            params={"query": q, "fmt": "json", "limit": 10},
+            headers={"User-Agent": "ProyavkaDiary/0.1 (hackathon project)"},
+            timeout=8,
+        )
+        years = [
+            int(rec["first-release-date"][:4])
+            for rec in r.json().get("recordings", [])
+            if rec.get("score", 0) >= 90 and (rec.get("first-release-date") or "")[:4].isdigit()
+        ]
+        return min(years) if years else None
+    except Exception as e:
+        log.info("MusicBrainz: %s", e)
+        return None
+
+
 def _album_meta(c: httpx.Client, track: dict) -> tuple[str | None, int | None]:
     year = None
     rd = track.get("release_date") or (track.get("album") or {}).get("release_date") or ""
@@ -140,15 +161,25 @@ def analyze_audio(path: str) -> dict:
     duration = float(len(y) / sr)
 
     # темп и биты
-    onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
+    # hop 256 при 11 кГц = шаг 23 мс; темп уточняем по среднему интервалу между битами,
+    # иначе beat_track отдаёт значения сетки (117.5, 129.2...)
+    hop = 256
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop)
+    tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr, hop_length=hop)
     bpm = float(np.atleast_1d(tempo)[0])
-    beats = librosa.frames_to_time(beat_frames, sr=sr).round(3).tolist()
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop)
+    if len(beat_times) > 8:
+        d = np.diff(beat_times)
+        med = float(np.median(d))
+        d = d[np.abs(d - med) < 0.2 * med]
+        if len(d) > 4:
+            bpm = 60.0 / float(d.mean())
+    beats = beat_times.round(3).tolist()
 
     # лад: CQT-хромограмма -> медиана по битам (гасит ударные дешевле, чем HPSS) -> 24 профиля Крумханзля
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     if len(beat_frames) > 4:
-        prof = np.median(librosa.util.sync(chroma, beat_frames, aggregate=np.median), axis=1)
+        prof = np.median(librosa.util.sync(chroma, beat_frames // 2, aggregate=np.median), axis=1)
     else:
         prof = chroma.mean(axis=1)
     best = (-2.0, "major", 0)
@@ -169,7 +200,7 @@ def analyze_audio(path: str) -> dict:
 
     # энергия: громкость (RMS в дБ) + плотность атак
     rms_db = float(librosa.amplitude_to_db(librosa.feature.rms(y=y)).mean())
-    onset_rate = float(len(librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)) / duration)
+    onset_rate = float(len(librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, hop_length=hop)) / duration)
     energy = 0.6 * _norm(rms_db, -38, -10) + 0.4 * _norm(onset_rate, 0.5, 5.0)
 
     # валентность (эвристика): мажор, темп, яркость спектра
@@ -222,6 +253,10 @@ def analyze_song(song_url: str | None, file_path: str | None) -> dict:
                 log.warning("Deezer не нашёл трек: %r", query or track_id)
                 return _fallback(song_url, {"title": query or None})
             genre, year = _album_meta(c, track)
+            artist_name = (track.get("artist") or {}).get("name") or ""
+            mb_year = _first_year(c, artist_name, track.get("title_short") or track.get("title") or "")
+            if mb_year and (year is None or mb_year < year):
+                year = mb_year
             meta = {
                 "title": track.get("title_short") or track.get("title"),
                 "artist": (track.get("artist") or {}).get("name"),
