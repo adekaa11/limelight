@@ -340,8 +340,8 @@ def voice_params(f: dict, technique: str) -> tuple[dict, str]:
         v = {"name": "ru-RU-SvetlanaNeural", "rate": "-15%", "pitch": "-2Hz"}
         why = f"энергия {E:.2f} < 0.4 -> голос тихий тёплый (Светлана, темп −15%)"
     elif E > 0.7:
-        v = {"name": "ru-RU-SvetlanaNeural", "rate": "+10%", "pitch": "+4Hz"}
-        why = f"энергия {E:.2f} > 0.7 -> голос живой быстрый (Светлана, темп +10%, выше)"
+        v = {"name": "ru-RU-SvetlanaNeural", "rate": "+10%", "pitch": "+0Hz"}
+        why = f"энергия {E:.2f} > 0.7 -> голос живой быстрый (Светлана, темп +10%)"
     elif technique == "kandinsky":
         v = {"name": "ru-RU-DmitryNeural", "rate": "+0%", "pitch": "+0Hz"}
         why = "Кандинский -> ровный собранный голос (Дмитрий)"

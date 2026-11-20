@@ -93,10 +93,10 @@ async def create_day(
         # 3. озвучка
         voice_path = str(tmpd / "voice.mp3")
         voice_out = await _safe(run_in_threadpool(synthesize_voice, text, voice, voice_path), "", "synthesize_voice")
-        if not voice_out and voice["name"] != FALLBACK_VOICE:
-            # голос недоступен: тот же темп и высота, но базовым голосом
-            voice = {**voice, "name": FALLBACK_VOICE}
-            explanation.append(f"голос недоступен -> {FALLBACK_VOICE}")
+        if not voice_out and (voice["name"] != FALLBACK_VOICE or voice["pitch"] != "+0Hz"):
+            # голос или высота не приняты сервисом: тот же темп, базовый голос, без сдвига высоты
+            voice = {**voice, "name": FALLBACK_VOICE, "pitch": "+0Hz"}
+            explanation.append(f"голос не принят сервисом -> {FALLBACK_VOICE}, темп {voice['rate']}")
             voice_out = await _safe(run_in_threadpool(synthesize_voice, text, voice, voice_path), "", "synthesize_voice")
         voice_url = None
         if voice_out and Path(voice_out).is_file():
