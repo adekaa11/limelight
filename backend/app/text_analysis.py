@@ -87,10 +87,18 @@ async def _call_gemini(text: str) -> str:
     models = [m.strip() for m in settings.gemini_model.split(",") if m.strip()]
     async with httpx.AsyncClient(timeout=settings.llm_timeout) as c:
         for i, model in enumerate(models):
+            last = i == len(models) - 1
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-            r = await c.post(url, json=body, headers={"x-goog-api-key": settings.gemini_api_key})
-            if r.status_code == 404 and i < len(models) - 1:
-                log.warning("Gemini: модель %s недоступна, пробуем следующую", model)
+            try:
+                r = await c.post(url, json=body, headers={"x-goog-api-key": settings.gemini_api_key})
+            except httpx.TimeoutException:
+                if last:
+                    raise
+                log.warning("Gemini: %s не ответила вовремя, пробуем следующую", model)
+                continue
+            # 404 = модель закрыта, 429 = лимит, 5xx = перегрузка: пробуем следующую модель
+            if (r.status_code in (404, 429) or r.status_code >= 500) and not last:
+                log.warning("Gemini: %s ответила %s, пробуем следующую", model, r.status_code)
                 continue
             r.raise_for_status()
             return r.json()["candidates"][0]["content"]["parts"][0]["text"]
@@ -318,7 +326,13 @@ async def analyze_text(text: str) -> tuple[dict, str, str, str]:
     provider = settings.llm_provider
     try:
         if provider == "gemini" and settings.gemini_api_key:
-            raw = await _call_gemini(text)
+            try:
+                raw = await _call_gemini(text)
+            except Exception:
+                if not settings.groq_api_key:
+                    raise
+                log.warning("Gemini недоступен, переключаемся на Groq")
+                raw, provider = await _call_groq(text), "groq"
         elif provider == "groq" and settings.groq_api_key:
             raw = await _call_groq(text)
         else:

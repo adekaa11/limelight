@@ -34,10 +34,10 @@ class Settings:
     # LLM: gemini | groq | none
     llm_provider: str = os.getenv("LLM_PROVIDER", "gemini").lower()
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
-    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash,gemini-flash-latest")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.8-flash,gemini-flash-latest,gemini-flash-lite-latest")
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
     groq_model: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-    llm_timeout: float = float(os.getenv("LLM_TIMEOUT", "25"))
+    llm_timeout: float = float(os.getenv("LLM_TIMEOUT", "40"))
 
     # Локальное хранилище и публичный адрес бэка (для ссылок на файлы)
     local_data_dir: Path = Path(os.getenv("LOCAL_DATA_DIR", str(BACKEND_DIR / "data")))
