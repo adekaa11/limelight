@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+html,
+body {
+  background: #f4efe6;
+  color: #2b2622;
+  font-family: Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  background-image: radial-gradient(rgba(120, 100, 80, 0.06) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/20 bg-paper px-4 py-2 text-sm text-ink transition hover:border-ink/50 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn border-ink bg-ink text-paper hover:bg-ink/85 hover:text-paper;
+  }
+  .card {
+    @apply rounded-sm border border-line bg-[#faf7f1] shadow-[0_1px_0_rgba(0,0,0,0.03)];
+  }
+  .label {
+    @apply text-[11px] font-medium uppercase tracking-[0.14em] text-muted;
+  }
+  .input {
+    @apply w-full rounded-sm border border-line bg-[#fffdf9] px-3 py-2 text-sm outline-none focus:border-ink/50;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full border border-line bg-paper px-2.5 py-0.5 text-xs text-ink/80;
+  }
+}
+
+/* react-pageflip */
+.stf__parent {
+  margin: 0 auto;
+}
+.book-page {
+  background: #faf6ee;
+  overflow: hidden;
+}
