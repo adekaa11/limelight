@@ -6,7 +6,7 @@ pydantic==2.10.4
 python-dotenv==1.0.1
 Pillow==11.0.0
 edge-tts==7.3.1
-# анализ музыки (модуль Айкайнара)
+# анализ музыки (модуль Еркайнара)
 numpy==1.26.4
 librosa==0.10.2.post1
 soundfile==0.12.1

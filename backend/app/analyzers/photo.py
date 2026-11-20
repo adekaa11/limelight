@@ -1,4 +1,4 @@
-"""ЗАГЛУШКА с минимальной рабочей логикой. Реальную версию (k-means) пишет Айкайнар.
+"""Анализ фото (Pillow, медианное квантование вместо k-means: быстро и без sklearn).
 
 analyze_photos(paths) -> [{dominant_colors: [#hex x5], brightness: 0-1, warmth: 0-1}]
 """

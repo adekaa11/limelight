@@ -1,4 +1,4 @@
-"""ЗАГЛУШКА. Реальную версию (edge-tts) пишет Айкайнар.
+"""Озвучка через edge-tts. Доступные русские голоса: Светлана, Дмитрий. Повышение высоты сервис не принимает.
 
 synthesize_voice(text, voice_params, out_path) -> str (путь к mp3) или "" если не получилось.
 voice_params = {name, rate, pitch} из style_engine.
