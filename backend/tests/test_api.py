@@ -21,7 +21,10 @@ def _jpg(color):
 
 
 def _no_voice(monkeypatch):
-    monkeypatch.setattr(pipeline, "synthesize_voice", lambda t, v, p: "")
+    async def no_voice(text, voice, path, explanation):
+        return voice, ""
+
+    monkeypatch.setattr(pipeline, "_voice", no_voice)
 
 
 def test_health():

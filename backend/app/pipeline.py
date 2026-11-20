@@ -116,7 +116,12 @@ async def _prepare_photos(photos: list[Upload], tmpd: Path) -> tuple[list[str], 
 
 
 async def _voice(text: str, voice: dict, path: str, explanation: list[str]) -> tuple[dict, str]:
-    out = await _safe(run_in_threadpool(synthesize_voice, text, voice, path), "", "synthesize_voice")
+    out = ""
+    for attempt in range(3):  # сервис озвучки иногда не отдаёт звук с первого раза
+        out = await _safe(run_in_threadpool(synthesize_voice, text, voice, path), "", "synthesize_voice")
+        if out:
+            break
+        await asyncio.sleep(1.5 * (attempt + 1))
     if not out and (voice["name"] != FALLBACK_VOICE or voice["pitch"] != "+0Hz"):
         # голос или высота не приняты сервисом: тот же темп, базовый голос, без сдвига высоты
         voice = {**voice, "name": FALLBACK_VOICE, "pitch": "+0Hz"}
@@ -208,7 +213,8 @@ async def create_day(
         "explanation": explanation,
         "folder": folder,
         "video_url": None,
-        "meta": {"llm": llm_src, "song_source": song_raw.get("source", "fallback"), "timings": tm.total()},
+        "meta": {"llm": llm_src, "song_source": song_raw.get("source", "fallback"),
+                 "timings": {**tm.total(), **{f"song_{k}": v for k, v in (song_raw.get("timings") or {}).items()}}},
         "created_at": datetime.now(ASTANA_TZ).isoformat(),
     }
     # «рецепт» дня и метаданные песни тоже кладём в папку

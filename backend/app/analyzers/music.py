@@ -12,6 +12,7 @@ import html
 import logging
 import re
 import tempfile
+import time
 from pathlib import Path
 from urllib.parse import quote, urlparse
 
@@ -245,6 +246,8 @@ def analyze_song(song_url: str | None, file_path: str | None) -> dict:
         return _fallback(None)
 
     meta: dict = {}
+    t0 = time.monotonic()
+    tm: dict[str, float] = {}
     try:
         with httpx.Client(timeout=TIMEOUT, headers=UA, follow_redirects=True) as c:
             track_id, query = _identify(c, song_url.strip())
@@ -252,6 +255,7 @@ def analyze_song(song_url: str | None, file_path: str | None) -> dict:
             if not track or not track.get("preview"):
                 log.warning("Deezer не нашёл трек: %r", query or track_id)
                 return _fallback(song_url, {"title": query or None})
+            tm["search"] = round(time.monotonic() - t0, 1)
             genre, year = _album_meta(c, track)
             artist_name = (track.get("artist") or {}).get("name") or ""
             mb_year = _first_year(c, artist_name, track.get("title_short") or track.get("title") or "")
@@ -266,12 +270,17 @@ def analyze_song(song_url: str | None, file_path: str | None) -> dict:
                 "year": year,
                 "deezer_id": track.get("id"),
             }
+            tm["meta"] = round(time.monotonic() - t0 - tm["search"], 1)
+            t1 = time.monotonic()
             audio = c.get(track["preview"])
             audio.raise_for_status()
+            tm["download"] = round(time.monotonic() - t1, 1)
         tmp = Path(tempfile.mkdtemp(prefix="song_")) / "preview.mp3"
         tmp.write_bytes(audio.content)
+        t2 = time.monotonic()
         res = analyze_audio(str(tmp))
-        return {**meta, "audio_path": str(tmp), "source": "deezer", **res}
+        tm["librosa"] = round(time.monotonic() - t2, 1)
+        return {**meta, "audio_path": str(tmp), "source": "deezer", "timings": tm, **res}
     except Exception as e:
         log.warning("analyze_song: %s: %s", type(e).__name__, e)
         return _fallback(song_url, meta)

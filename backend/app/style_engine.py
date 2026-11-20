@@ -397,7 +397,7 @@ def beat_step(bpm: float) -> int:
 def voice_params(f: dict, technique: str) -> tuple[dict, str]:
     E = f["energy"]
     if E < 0.4:
-        v = {"name": "ru-RU-SvetlanaNeural", "rate": "-15%", "pitch": "-2Hz"}
+        v = {"name": "ru-RU-SvetlanaNeural", "rate": "-15%", "pitch": "+0Hz"}
         why = f"энергия {E:.2f} < 0.4 -> голос тихий тёплый (Светлана, темп −15%)"
     elif E > 0.7:
         v = {"name": "ru-RU-SvetlanaNeural", "rate": "+10%", "pitch": "+0Hz"}
