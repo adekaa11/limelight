@@ -1,10 +1,44 @@
-# Фронтенд (Дан + Алимжан)
+# Фронтенд «Проявки» (Дан + Алимжан)
 
-React + Vite + TS + Tailwind. Роуты: `/` архив-книга, `/year` год в цветах, `/new` запись, `/day/:id` просмотр, `/lab` настройка техник.
+React 18 + Vite + TypeScript + Tailwind. Canvas 2D + WebAudio, без библиотек графики.
 
-- Тип `Day` и эндпоинты: [../docs/api-contract.md](../docs/api-contract.md)
-- Моки: `src/mocks/days.json` (5 дней, все 5 техник, один день годичной давности для проверки старения). Сгенерированы из `backend/scripts/make_mocks.py`, то есть совпадают с реальными правилами бэка. Перегенерировать: `cd backend && python -m scripts.make_mocks`.
-- `palette[0]` — фон страницы, `palette[1..4]` — акценты.
-- `song.preview_url` указывает на наш Storage (с CORS), поэтому `createMediaElementSource` + AnalyserNode работают. На `<audio>` ставить `crossOrigin="anonymous"`.
-- После экспорта видео: `PUT /api/days/{id}/memory` с `file` = webm.
-- `/lab` может дёргать `POST /api/style` и показывать, как меняется стиль от ползунков.
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173, без VITE_API_URL работает на моках
+npm run build
+```
+
+`.env` (см. `.env.example`): `VITE_API_URL=https://<render>.onrender.com` — живой бэк, пусто — моки из `src/mocks/days.json`.
+Деплой: Vercel, root = `frontend`, SPA-rewrite в `vercel.json`.
+
+## Экраны
+
+| Роут | Что | Кто |
+|---|---|---|
+| `/` | архив-книга (react-pageflip) + «Лента» — проверка лентой 5–7 дней рядом; поиск, фильтр по месяцу и технике | Дан |
+| `/year` | «Год в цветах»: календарь, каждый день залит градиентом своей палитры | Дан |
+| `/new` | запись: текст с подсказками, фото drag&drop, песня ссылкой или файлом, этапы загрузки | Дан |
+| `/day/:id` | MemoryPlayer + «Рецепт дня» (вход → сработавшие правила → результат), озвучка, zip, экспорт видео | Дан |
+| `/lab` | переключатель техник, ползунки переменных элементов, возраст записи, один день во всех техниках | Алимжан |
+
+## MemoryPlayer (`src/player/`)
+
+```
+MemoryPlayer.tsx   компонент: «Открыть день», пауза по тапу, экспорт
+renderer.ts        порядок слоёв: техника -> погода -> бумага -> постоянные элементы -> старение -> зерно -> проявление
+layout.ts          постоянные элементы: сетка в u (1% ширины), дата, название, паспарту, заметки на полях, подпись, номер страницы
+timeline.ts        смена кадра на каждом beat_step-м бите, смена сцены на song.analysis.sections
+audio.ts           <audio> -> AnalyserNode (бас = пульс, верх = дрожание) -> MediaStreamDestination (экспорт); без превью — ритм-эскиз по битам, BPM и ладу
+prepare.ts         загрузка фото, цветокоррекция под палитру (gradient map + насыщенность + контраст), текстуры бумаги и зерна
+post.ts            бумага, старение, зерно, «проявление» (color-dodge)
+techniques/        monet, kandinsky, film, collage, japanese — общий интерфейс render(ctx, image, style, t, audio, env)
+poster.ts          статичный кадр для архива тем же рендером
+exportVideo.ts     canvas.captureStream + аудио -> MediaRecorder -> .webm
+```
+
+- 720×1280 на десктопе, 540×960 на телефоне, не чаще 30 fps. Мазки Моне считаются один раз на фото и кэшируются в «картину»; живыми остаются ~260 мазков.
+- Старение: `fade = 1 − e^(−возраст/400)` (месяц 7%, год 60%). В архиве день выцветший; при открытии 3 с «проявляется» до 35% от возрастного выцветания.
+- Каждое правило фронта попадает в «Рецепт дня» (блок «на экране»), правила бэка — из `day.explanation`.
+- `song.preview_url` должен отдавать CORS (наш Storage), иначе AnalyserNode молчит — тогда плеер переходит на ритм-эскиз и пишет об этом под страницей.
+- После экспорта: `PUT /api/days/{id}/memory` с `file` = webm.
