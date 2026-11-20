@@ -56,6 +56,30 @@ async def health():
     return {"ok": True, "storage": "supabase" if settings.use_supabase else "local", "llm": settings.llm_provider}
 
 
+@app.get("/api/health/deps")
+async def health_deps():
+    """Проверка внешних зависимостей: LLM и озвучка. Ключи в ответ не попадают."""
+    import tempfile
+    from pathlib import Path
+
+    from fastapi.concurrency import run_in_threadpool
+
+    from .analyzers.voice import synthesize_voice
+    from .text_analysis import probe_llm
+
+    llm = await probe_llm()
+    with tempfile.TemporaryDirectory() as tmp:
+        out = str(Path(tmp) / "v.mp3")
+        try:
+            res = await run_in_threadpool(
+                synthesize_voice, "Проверка голоса.", {"name": "ru-RU-SvetlanaNeural", "rate": "+0%", "pitch": "+0Hz", "_raise": True}, out
+            )
+            voice = {"ok": bool(res) and Path(out).is_file(), "bytes": Path(out).stat().st_size if Path(out).is_file() else 0}
+        except Exception as e:
+            voice = {"ok": False, "error": f"{type(e).__name__}: {e}"[:400]}
+    return {"llm": llm, "voice": voice}
+
+
 @app.post("/api/days", response_model=Day)
 async def post_day(
     text: Annotated[str, Form()],

@@ -19,5 +19,10 @@ def synthesize_voice(text: str, voice_params: dict, out_path: str) -> str:
 
         asyncio.run(run())
         return out_path
-    except Exception:
+    except Exception as e:
+        import logging
+
+        logging.getLogger(__name__).warning("edge-tts: %s: %s", type(e).__name__, e)
+        if voice_params.get("_raise"):
+            raise
         return ""

@@ -240,6 +240,20 @@ def _photo_colors(pa: list[dict]) -> list[str]:
     return out
 
 
+def _rgb(h: str) -> tuple[int, int, int]:
+    h = h.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+
+
+def _dedupe(colors: list[str], min_dist: float = 28.0) -> list[str]:
+    """Убираем почти одинаковые цвета (евклидово расстояние в RGB)."""
+    out: list[str] = []
+    for c in colors:
+        if all(sum((a - b) ** 2 for a, b in zip(_rgb(c), _rgb(o))) ** 0.5 >= min_dist for o in out):
+            out.append(c)
+    return out or colors[:1]
+
+
 def _hue_dist(a: float, b: float) -> float:
     return abs(((a - b + 180) % 360) - 180)
 
@@ -274,9 +288,13 @@ def build_palette(f: dict, pa: list[dict]) -> tuple[list[str], list[str]]:
             for d, l, s in ((0, 0.55, 0.45), (25, 0.45, 0.5), (-30, 0.65, 0.35), (180, 0.4, 0.3), (10, 0.3, 0.4))
         ]
         why.append("фото нет -> палитра строится от базового оттенка")
-    while len(src) < 5:  # дополняем вариациями светлоты
-        h, l, s = hex_to_hls(src[len(src) % max(1, len(src))])
-        src.append(hls_to_hex(h, _clamp(l + (0.2 if l < 0.5 else -0.2)), s))
+    src = _dedupe(src)
+    base_n, k = len(src), 0
+    while len(src) < 5:  # дополняем вариациями светлоты исходных цветов
+        h, l, s = hex_to_hls(src[k % base_n])
+        shift = (0.22, -0.22, 0.4, -0.4)[(k // base_n) % 4]
+        src.append(hls_to_hex(h, _clamp(l + shift, 0.08, 0.95), s))
+        k += 1
 
     sat_k = 1.0
     if mode == "minor":

@@ -201,7 +201,7 @@ _MOOD_LEX = [
 _SENSE = re.compile(
     r"(?<![а-яё])(запах\w*|пахл\w*|пахнет|аромат\w*|звук\w*|шум\w*|шорох\w*|шурш\w*|гул\w*|стук\w*|смех\w*|"
     r"свет\w*|солнц\w*|луч\w*|вкус\w*|тепл\w*|холод\w*|ветер|ветр\w*)"
-    r"(\s+[а-яё]{3,})",
+    r"(\s+[а-яё]{4,})",
     re.I,
 )
 _PEOPLE = ("мам", "пап", "бабушк", "дедушк", "брат", "сестр", "друз", "подруг", "коллег", "сын", "доч", "муж", "жена")
@@ -287,6 +287,24 @@ def fallback_analysis(text: str) -> tuple[dict, str, str]:
 
 
 # ---------- вход ----------
+
+async def probe_llm() -> dict:
+    """Диагностика для /api/health/deps: реальный вызов LLM, ошибка возвращается текстом."""
+    provider = settings.llm_provider
+    try:
+        if provider == "gemini" and settings.gemini_api_key:
+            raw = await _call_gemini("Утром пили чай на балконе, пахло дождём.")
+        elif provider == "groq" and settings.groq_api_key:
+            raw = await _call_groq("Утром пили чай на балконе, пахло дождём.")
+        else:
+            return {"ok": False, "provider": provider, "error": "ключ не задан"}
+        return {"ok": True, "provider": provider, "model": settings.gemini_model if provider == "gemini" else settings.groq_model,
+                "sample": _extract_json(raw).get("title")}
+    except httpx.HTTPStatusError as e:
+        return {"ok": False, "provider": provider, "status": e.response.status_code, "error": e.response.text[:400]}
+    except Exception as e:
+        return {"ok": False, "provider": provider, "error": f"{type(e).__name__}: {e}"[:400]}
+
 
 async def analyze_text(text: str) -> tuple[dict, str, str, str]:
     """Возвращает (text_analysis, title, caption, source), source = gemini|groq|fallback."""
