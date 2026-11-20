@@ -180,7 +180,7 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
         {(state === "ready" || state === "ended") && (
           <button
             onClick={open}
-            className="absolute bottom-[14%] left-1/2 -translate-x-1/2 rounded-full border border-ink/20 bg-paper/90 px-6 py-3 font-serif text-xl text-ink shadow-lg backdrop-blur transition hover:bg-paper"
+            className="absolute bottom-[14%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-ink/20 bg-paper/90 px-5 py-2.5 font-serif text-lg sm:px-6 sm:py-3 sm:text-xl text-ink shadow-lg backdrop-blur transition hover:bg-paper"
           >
             {state === "ended" ? "↻ Ещё раз" : "▶ Открыть день"}
           </button>
