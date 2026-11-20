@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 /**
- * Экран создания дня (на бесплатном Render это 1–1.5 мин, после простоя +50 с).
+ * Экран создания дня (замеры бэка: с песней ~65 с, без песни ~20 с, после простоя Render + до минуты).
  * Этапы «будим сервер» и «отправляем файлы» — настоящие (warmUp и прогресс XHR),
  * этапы анализа идут по типичным таймингам бэка: сервер анализирует параллельно и прогресс не отдаёт.
  * Фото пользователя «проявляется» по мере прогресса — та же метафора, что у плеера.
@@ -10,12 +10,12 @@ export type Phase = "wake" | "upload" | "processing" | "done" | "error";
 
 const ANALYSIS = [
   { at: 0, label: "Слушаем песню", hint: "темп, лад, энергия, биты и части песни" },
-  { at: 35, label: "Смотрим на свет в фото", hint: "доминантные цвета, яркость, теплота" },
-  { at: 50, label: "Читаем, как прошёл день", hint: "настроение, время года и суток, запахи и звуки" },
-  { at: 70, label: "Выбираем технику и палитру", hint: "60% цвета фото + 40% сдвиг по настроению" },
-  { at: 85, label: "Подбираем название папки", hint: "3–7 слов, по смыслу записи" },
-  { at: 100, label: "Записываем озвучку", hint: "голос и темп — по энергии дня" },
-  { at: 120, label: "Складываем папку дня", hint: "текст, фото, песня, голос, рецепт" },
+  { at: 12, label: "Смотрим на свет в фото", hint: "доминантные цвета, яркость, теплота" },
+  { at: 20, label: "Читаем, как прошёл день", hint: "настроение, время года и суток, запахи и звуки" },
+  { at: 38, label: "Выбираем технику и палитру", hint: "60% цвета фото + 40% сдвиг по настроению" },
+  { at: 46, label: "Подбираем название папки", hint: "3–7 слов, по смыслу записи" },
+  { at: 52, label: "Записываем озвучку", hint: "голос и темп — по энергии дня" },
+  { at: 60, label: "Складываем папку дня", hint: "текст, фото, песня, голос, рецепт" },
 ];
 
 const FACTS = [
@@ -61,7 +61,7 @@ export default function DevelopingScreen({ phase, upload, photo, error, onRetry,
   let p = 0;
   if (phase === "wake") p = 0.04 * Math.min(1, total / 50);
   else if (phase === "upload") p = 0.05 + 0.15 * upload;
-  else if (phase === "processing") p = 0.2 + 0.75 * (1 - Math.exp(-proc / 75));
+  else if (phase === "processing") p = 0.2 + 0.75 * (1 - Math.exp(-proc / 32));
   else if (phase === "done") p = 1;
   else p = 0.15;
 
@@ -109,7 +109,7 @@ export default function DevelopingScreen({ phase, upload, photo, error, onRetry,
           <div className="h-full bg-ink/60 transition-[width] duration-500" style={{ width: `${p * 100}%` }} />
         </div>
         <p className="mt-2 text-center text-xs text-muted">
-          {fmt(total)} · обычно 1–3 мин{wasAsleep ? " + пробуждение сервера" : ""}
+          {fmt(total)} · обычно около минуты{wasAsleep ? " + пробуждение сервера" : ""}
         </p>
       </div>
 
@@ -144,7 +144,7 @@ export default function DevelopingScreen({ phase, upload, photo, error, onRetry,
                     </span>
                     {s.hint && s.state === "active" && (
                       <span className="block text-xs text-muted">
-                        {s.label.startsWith("Складываем") && proc > 150 ? "бесплатный сервер сегодня не торопится — ещё немного, страница откроется сама" : s.hint}
+                        {s.label.startsWith("Складываем") && proc > 90 ? "бесплатный сервер сегодня не торопится — ещё немного, страница откроется сама" : s.hint}
                       </span>
                     )}
                   </span>

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import HTMLFlipBookRaw from "react-pageflip";
 import Poster from "../components/Poster";
@@ -110,9 +110,15 @@ export default function Archive() {
 }
 
 function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const book = useRef<any>(null);
+  const [page, setPage] = useState(0);
+  const total = days.length + 2;
   return (
-    <div className="flex justify-center py-2">
+    <div className="flex flex-col items-center py-2">
       <HTMLFlipBook
+        ref={book}
+        onFlip={(e: { data: number }) => setPage(e.data)}
         width={360}
         height={640}
         size="stretch"
@@ -164,6 +170,17 @@ function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
           <div className="flex h-full items-center justify-center p-8 text-center font-serif text-xl italic text-paper/60">продолжение следует…</div>
         </Page>
       </HTMLFlipBook>
+      <div className="mt-4 flex items-center gap-4 text-sm text-muted">
+        <button className="btn" disabled={page <= 0} onClick={() => book.current?.pageFlip()?.flipPrev()} aria-label="предыдущая страница">
+          ←
+        </button>
+        <span className="min-w-[4rem] text-center font-serif">
+          {Math.min(page + 1, total)} / {total}
+        </span>
+        <button className="btn" disabled={page >= total - 1} onClick={() => book.current?.pageFlip()?.flipNext()} aria-label="следующая страница">
+          →
+        </button>
+      </div>
     </div>
   );
 }
