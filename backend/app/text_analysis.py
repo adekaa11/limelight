@@ -78,16 +78,23 @@ async def _call_gemini(text: str) -> str:
         contents.append({"role": "user", "parts": [{"text": _user_prompt(t)}]})
         contents.append({"role": "model", "parts": [{"text": json.dumps(ans, ensure_ascii=False)}]})
     contents.append({"role": "user", "parts": [{"text": _user_prompt(text)}]})
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_model}:generateContent"
     body = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": contents,
         "generationConfig": {"temperature": 0.4, "responseMimeType": "application/json"},
     }
+    # GEMINI_MODEL может быть списком через запятую: модели у Google закрываются, берём первую живую
+    models = [m.strip() for m in settings.gemini_model.split(",") if m.strip()]
     async with httpx.AsyncClient(timeout=settings.llm_timeout) as c:
-        r = await c.post(url, json=body, headers={"x-goog-api-key": settings.gemini_api_key})
-        r.raise_for_status()
-        return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+        for i, model in enumerate(models):
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+            r = await c.post(url, json=body, headers={"x-goog-api-key": settings.gemini_api_key})
+            if r.status_code == 404 and i < len(models) - 1:
+                log.warning("Gemini: модель %s недоступна, пробуем следующую", model)
+                continue
+            r.raise_for_status()
+            return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    raise RuntimeError("нет доступной модели Gemini")
 
 
 async def _call_groq(text: str) -> str:
