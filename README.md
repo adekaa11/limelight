@@ -8,9 +8,9 @@
 
 | | |
 |---|---|
-| Демо | [ВПИСАТЬ: ссылка Vercel] |
+| Демо | https://proyavka-eight.vercel.app |
 | Видео (до 3 мин) | [ВПИСАТЬ: ссылка] |
-| API | [ВПИСАТЬ: ссылка Render]/docs |
+| API | https://proyavka-api.onrender.com/docs (бесплатный сервер засыпает: первый запрос до минуты) |
 | Визуальная система | [docs/visual-system.md](docs/visual-system.md) |
 | Контракт API | [docs/api-contract.md](docs/api-contract.md) |
 

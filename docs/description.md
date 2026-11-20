@@ -47,4 +47,4 @@
 
 ## Ссылки
 
-Прототип: [ВПИСАТЬ] · Видео: [ВПИСАТЬ] · Код: https://github.com/adekaa11/proyavka
+Прототип: https://proyavka-eight.vercel.app · Видео: [ВПИСАТЬ] · Код: https://github.com/adekaa11/proyavka
