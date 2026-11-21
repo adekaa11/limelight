@@ -13,10 +13,10 @@ export default function ServerBanner() {
   }, [s]);
   if (s !== "waking" && s !== "down") return null;
   return (
-    <div className="border-b border-line bg-[#efe6d6] px-4 py-2 text-center text-sm text-ink/80">
+    <div className="border-b border-line bg-room2 px-4 py-2 text-center text-sm text-text/80">
       {s === "waking" ? (
         <>
-          <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-accent align-middle" />
+          <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-safelight align-middle" />
           Будим сервер: бесплатный хостинг засыпает без посетителей, первый ответ — до минуты{sec > 3 ? ` · ${sec} с` : ""}
         </>
       ) : (

@@ -249,13 +249,13 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
 
   return (
     <div className={`relative select-none ${className ?? ""}`}>
-      <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[3px] bg-paper2 shadow-[0_20px_50px_-20px_rgba(60,40,20,0.45)]">
+      <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[3px] bg-room2 shadow-print">
         <canvas ref={canvasRef} width={W} height={H} className="block h-full w-full" onClick={toggle} />
         {state === "loading" && <div className="absolute inset-0 grid place-items-center font-serif text-lg italic text-muted">проявляем…</div>}
         {(state === "ready" || state === "ended") && (
           <button
             onClick={open}
-            className={`${overlayClass} absolute bottom-[14%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-ink/20 bg-paper/90 px-5 py-2.5 font-serif text-lg sm:px-6 sm:py-3 sm:text-xl text-ink shadow-lg backdrop-blur transition hover:bg-paper`}
+            className={`${overlayClass} absolute bottom-[14%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-safelight bg-safelight px-5 py-2.5 font-serif text-lg font-semibold sm:px-6 sm:py-3 sm:text-xl text-onlight shadow-lg transition hover:bg-safelight/90`}
           >
             {state === "ended" ? "↻ Ещё раз" : "▶ Открыть день"}
           </button>
@@ -265,7 +265,7 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
             ❚❚ пауза
           </button>
         )}
-        <div className="absolute bottom-0 left-0 h-[3px] bg-ink/40" ref={barRef} style={{ width: 0 }} />
+        <div className="absolute bottom-0 left-0 h-[3px] bg-text/40" ref={barRef} style={{ width: 0 }} />
       </div>
       {note && <p className="mt-2 text-center text-xs text-muted">{note}</p>}
       <p className="sr-only">Длительность до {MAX_DURATION} секунд</p>

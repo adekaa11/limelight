@@ -2,40 +2,119 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+/* Тёмная комната проявки (по умолчанию). Каналы RGB — для прозрачности в Tailwind: bg-room/90. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --room: 20 17 15; /* #14110F */
+  --room2: 30 26 23; /* #1E1A17 */
+  --line: 58 51 45; /* #3A332D */
+  --text: 241 234 223; /* #F1EADF */
+  --muted: 156 145 134; /* #9C9186 */
+  --safelight: 224 69 43; /* #E0452B */
+  --onlight: 20 17 15;
+  --print: 246 240 230; /* #F6F0E6 */
+  --printink: 43 38 34;
+  --lamp: rgba(224, 69, 43, 0.11);
+  --grain-opacity: 0.05;
+  --print-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.85), 0 26px 70px -30px rgba(224, 69, 43, 0.32);
+  --print-shadow-lift: 0 28px 56px -18px rgba(0, 0, 0, 0.9), 0 34px 90px -30px rgba(224, 69, 43, 0.45);
 }
+
+/* Свет включён: та же комната днём — бумага и тёмные чернила, красный свет темнее ради контраста. */
+[data-theme="light"] {
+  color-scheme: light;
+  --room: 244 239 230; /* #F4EFE6 */
+  --room2: 250 247 241; /* #FAF7F1 */
+  --line: 217 208 193; /* #D9D0C1 */
+  --text: 43 38 34; /* #2B2622 */
+  --muted: 110 100 90; /* #6E645A */
+  --safelight: 168 50 28; /* #A8321C */
+  --onlight: 251 247 240;
+  --print: 250 246 238;
+  --printink: 43 38 34;
+  --lamp: rgba(224, 69, 43, 0.06);
+  --grain-opacity: 0.04;
+  --print-shadow: 0 20px 50px -20px rgba(60, 40, 20, 0.45);
+  --print-shadow-lift: 0 30px 60px -22px rgba(60, 40, 20, 0.55);
+}
+
 html,
 body {
-  background: #f4efe6;
-  color: #2b2622;
+  background-color: rgb(var(--room));
+  color: rgb(var(--text));
   font-family: Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 body {
-  background-image: radial-gradient(rgba(120, 100, 80, 0.06) 1px, transparent 1px);
-  background-size: 4px 4px;
+  /* лампа: мягкий красный свет сверху по центру, к краям темнота */
+  background-image: radial-gradient(ellipse 70% 55% at 50% -8%, var(--lamp), transparent 70%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+/* плёночное зерно поверх всего, клики проходят насквозь */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+:root[data-theme="light"] body::after {
+  filter: invert(1);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: rgb(var(--safelight) / 0.35);
+  color: rgb(var(--text));
+}
+:focus-visible {
+  outline: 2px solid rgb(var(--safelight));
+  outline-offset: 2px;
+}
+* {
+  scrollbar-color: rgb(var(--line)) transparent;
+}
+input,
+textarea {
+  caret-color: rgb(var(--safelight));
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/20 bg-paper px-4 py-2 text-sm text-ink transition hover:border-ink/50 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-line bg-transparent px-4 py-2 text-sm text-text transition hover:border-text/50 hover:bg-text/5 disabled:cursor-not-allowed disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn border-ink bg-ink text-paper hover:bg-ink/85 hover:text-paper;
+    @apply btn border-safelight bg-safelight font-medium text-onlight hover:border-safelight hover:bg-safelight/85 hover:text-onlight;
   }
   .card {
-    @apply rounded-sm border border-line bg-[#faf7f1] shadow-[0_1px_0_rgba(0,0,0,0.03)];
+    @apply rounded-sm border border-line bg-room2;
   }
   .label {
     @apply text-[11px] font-medium uppercase tracking-[0.14em] text-muted;
   }
   .input {
-    @apply w-full rounded-sm border border-line bg-[#fffdf9] px-3 py-2 text-sm outline-none focus:border-ink/50;
+    @apply w-full rounded-sm border border-line bg-room2 px-3 py-2 text-sm text-text outline-none placeholder:text-muted focus:border-text/50;
   }
   .chip {
-    @apply inline-flex items-center rounded-full border border-line bg-paper px-2.5 py-0.5 text-xs text-ink/80;
+    @apply inline-flex items-center rounded-full border border-line bg-room2 px-2.5 py-0.5 text-xs text-text/80;
   }
+  /* активный пункт переключателя (Лента/Книга, годы, режимы) */
+  .seg-on {
+    @apply bg-safelight text-onlight;
+  }
+}
+
+/* на свету лампа почти не видна */
+[data-theme="light"] .lamp-glow {
+  opacity: 0.3;
 }
 
 /* react-pageflip */
@@ -43,6 +122,58 @@ body {
   margin: 0 auto;
 }
 .book-page {
-  background: #faf6ee;
+  background: rgb(var(--print));
   overflow: hidden;
+}
+
+/* Отпечаток под лампой: проявление ч/б → цвет при наведении (лента, год). */
+.print-develop {
+  transition: filter 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.group:hover .print-develop,
+.group:focus-visible .print-develop {
+  filter: none !important;
+}
+
+/* Intro: страница циклично проявляется из белого за 3 с под красным светом */
+@keyframes develop-loop {
+  0%,
+  8% {
+    filter: brightness(2.4) contrast(0.35) grayscale(1) sepia(0.15);
+    opacity: 0.9;
+  }
+  60% {
+    filter: brightness(1.15) contrast(0.85) grayscale(0.4);
+    opacity: 1;
+  }
+  100% {
+    filter: none;
+    opacity: 1;
+  }
+}
+.develop-loop {
+  animation: develop-loop 3s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+}
+
+/* ванночка с проявителем: медленный блик по жидкости */
+@keyframes tray-sheen {
+  0% {
+    transform: translateX(-60%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(160%) skewX(-18deg);
+  }
+}
+.tray-sheen {
+  animation: tray-sheen 5.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .develop-loop,
+  .tray-sheen {
+    animation: none;
+  }
+  .print-develop {
+    transition: none;
+  }
 }

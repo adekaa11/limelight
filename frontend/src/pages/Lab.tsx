@@ -83,7 +83,7 @@ export default function Lab() {
                 <button
                   key={t.id}
                   onClick={() => set("technique", t.id as Technique)}
-                  className={`rounded-sm border px-2.5 py-1.5 text-xs ${style.technique === t.id ? "border-ink bg-ink text-paper" : "border-line hover:border-ink/40"}`}
+                  className={`rounded-sm border px-2.5 py-1.5 text-xs ${style.technique === t.id ? "border-safelight seg-on" : "border-line hover:border-text/40"}`}
                   title={t.when}
                 >
                   {t.name}
@@ -100,7 +100,7 @@ export default function Lab() {
             <span className="label">смена кадра</span>
             <div className="mt-1 flex gap-1">
               {([1, 2, 4] as const).map((s) => (
-                <button key={s} onClick={() => set("beat_step", s)} className={`flex-1 rounded-sm border py-1.5 text-xs ${style.beat_step === s ? "border-ink bg-ink text-paper" : "border-line"}`}>
+                <button key={s} onClick={() => set("beat_step", s)} className={`flex-1 rounded-sm border py-1.5 text-xs ${style.beat_step === s ? "border-safelight seg-on" : "border-line"}`}>
                   каждый {s === 1 ? "" : `${s}-й `}бит
                 </button>
               ))}
@@ -140,7 +140,7 @@ export default function Lab() {
                 <Slider label={`BPM ${inputs.bpm}`} v={inputs.bpm} min={50} max={180} step={1} on={(v) => setInputs((s) => ({ ...s, bpm: v }))} />
                 <div className="mt-2 flex gap-1">
                   {(["major", "minor"] as const).map((m) => (
-                    <button key={m} onClick={() => setInputs((s) => ({ ...s, mode: m }))} className={`flex-1 rounded-sm border py-1 text-xs ${inputs.mode === m ? "border-ink bg-ink text-paper" : "border-line"}`}>
+                    <button key={m} onClick={() => setInputs((s) => ({ ...s, mode: m }))} className={`flex-1 rounded-sm border py-1 text-xs ${inputs.mode === m ? "border-safelight seg-on" : "border-line"}`}>
                       {m === "major" ? "мажор" : "минор"}
                     </button>
                   ))}
@@ -167,7 +167,7 @@ export default function Lab() {
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-3">
             {TECHNIQUES.map((t) => (
               <button key={t.id} onClick={() => set("technique", t.id)} className="text-left">
-                <Poster day={{ ...base, style: { ...base.style, technique: t.id } }} width={240} className={`rounded-[2px] ${style.technique === t.id ? "ring-2 ring-ink" : ""}`} />
+                <Poster day={{ ...base, style: { ...base.style, technique: t.id } }} width={240} className={`rounded-[2px] ${style.technique === t.id ? "ring-2 ring-safelight" : ""}`} />
                 <span className="mt-1 block text-xs text-muted">{t.name}</span>
               </button>
             ))}
@@ -185,7 +185,7 @@ function Slider({ label, v, on, min = 0, max = 1, step = 0.01 }: { label: string
         <span className="label">{label}</span>
         <span className="font-mono text-xs text-muted">{step < 1 ? v.toFixed(2) : v}</span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => on(+e.target.value)} className="mt-1 w-full accent-ink" />
+      <input type="range" min={min} max={max} step={step} value={v} onChange={(e) => on(+e.target.value)} className="mt-1 w-full accent-[rgb(var(--safelight))]" />
     </label>
   );
 }

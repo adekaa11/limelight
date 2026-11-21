@@ -114,7 +114,7 @@ export default function NewDay() {
       <section className="card mt-6 p-4 sm:p-5">
         <div className="mb-2 flex flex-wrap gap-1.5">
           {HINTS.map((h) => (
-            <button key={h.label} type="button" onClick={() => hint(h.text)} className="chip hover:border-ink/40">
+            <button key={h.label} type="button" onClick={() => hint(h.text)} className="chip hover:border-text/40">
               + {h.label}
             </button>
           ))}
@@ -125,7 +125,7 @@ export default function NewDay() {
           onChange={(e) => setText(e.target.value)}
           rows={8}
           placeholder="Гуляли по парку, всё в жёлтых листьях. Было холодно, но мы пили какао и долго разговаривали…"
-          className="w-full resize-y bg-transparent font-serif text-xl leading-relaxed outline-none placeholder:text-ink/30"
+          className="w-full resize-y bg-transparent font-serif text-xl leading-relaxed outline-none placeholder:text-muted"
         />
         <div className="flex items-center justify-between text-xs text-muted">
           <span>{text.trim().length < 10 ? "минимум 10 символов" : `${text.trim().split(/\s+/).length} слов`}</span>
@@ -145,7 +145,7 @@ export default function NewDay() {
           }}
           onDragLeave={() => setDrag(false)}
           onDrop={onDrop}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed p-6 text-center transition ${drag ? "border-ink/60 bg-white" : "border-line bg-[#faf7f1] hover:border-ink/30"}`}
+          className={`flex cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed p-6 text-center transition ${drag ? "border-safelight/70 bg-safelight/5" : "border-line bg-room2 hover:border-text/30"}`}
         >
           <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => e.target.files && addFiles(e.target.files)} />
           <span className="font-serif text-lg">Перетащите фото сюда или нажмите</span>
@@ -154,12 +154,12 @@ export default function NewDay() {
         {!!previews.length && (
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
             {previews.map((src, i) => (
-              <div key={src} className="group relative aspect-square overflow-hidden rounded-sm bg-paper2">
+              <div key={src} className="group relative aspect-square overflow-hidden rounded-sm bg-room2">
                 <img src={src} alt="" className="h-full w-full object-cover" />
                 <button
                   type="button"
                   onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))}
-                  className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-ink/70 text-xs text-paper opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-room/80 text-xs text-text opacity-90 sm:opacity-0 sm:group-hover:opacity-100"
                   aria-label="убрать фото"
                 >
                   ×
@@ -175,7 +175,7 @@ export default function NewDay() {
           <p className="label">Песня дня</p>
           <div className="flex rounded-full border border-line p-0.5 text-xs">
             {(["url", "file"] as const).map((m) => (
-              <button key={m} type="button" onClick={() => setSongMode(m)} className={`rounded-full px-3 py-0.5 ${songMode === m ? "bg-ink text-paper" : "text-muted"}`}>
+              <button key={m} type="button" onClick={() => setSongMode(m)} className={`rounded-full px-3 py-0.5 ${songMode === m ? "seg-on" : "text-muted"}`}>
                 {m === "url" ? "ссылка" : "файл"}
               </button>
             ))}
@@ -190,7 +190,7 @@ export default function NewDay() {
           />
         ) : (
           <label className="input flex cursor-pointer items-center justify-between">
-            <span className={songFile ? "" : "text-ink/40"}>{songFile ? songFile.name : "mp3, m4a, wav до 20 МБ"}</span>
+            <span className={songFile ? "" : "text-text/40"}>{songFile ? songFile.name : "mp3, m4a, wav до 20 МБ"}</span>
             <span className="text-xs text-muted">выбрать</span>
             <input type="file" accept="audio/*" className="hidden" onChange={(e) => setSongFile(e.target.files?.[0] ?? null)} />
           </label>

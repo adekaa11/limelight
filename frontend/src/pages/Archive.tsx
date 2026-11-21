@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode, type PointerEvent as RPointerEvent } from "react";
 import { Link } from "react-router-dom";
 import HTMLFlipBookRaw from "react-pageflip";
 import Poster from "../components/Poster";
@@ -88,7 +88,7 @@ export default function Archive() {
         </select>
         <div className="flex rounded-full border border-line p-0.5 text-sm">
           {(["feed", "book"] as View[]).map((v) => (
-            <button key={v} onClick={() => setView(v)} className={`rounded-full px-3 py-1 ${view === v ? "bg-ink text-paper" : "text-muted"}`}>
+            <button key={v} onClick={() => setView(v)} className={`rounded-full px-3 py-1 ${view === v ? "seg-on" : "text-muted"}`}>
               {v === "book" ? "Книга" : "Лента"}
             </button>
           ))}
@@ -136,11 +136,11 @@ function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
         disableFlipByClick={false}
         style={{}}
       >
-        <Page className="!bg-[#3b2f27] text-paper">
+        <Page className="!bg-[#3b2f27] text-print">
           <div className="flex h-full flex-col items-center justify-center border-[10px] border-[#3b2f27] p-8 text-center outline outline-1 outline-offset-[-18px] outline-[#c9a77c]/50">
             <p className="label !text-[#c9a77c]">дневник</p>
             <p className="mt-4 font-serif text-5xl font-semibold">Проявка</p>
-            <p className="mt-4 max-w-[16rem] font-serif text-lg italic text-paper/70">как ощущался каждый день</p>
+            <p className="mt-4 max-w-[16rem] font-serif text-lg italic text-print/70">как ощущался каждый день</p>
             <p className="mt-10 font-hand text-2xl text-[#c9a77c]">листайте →</p>
           </div>
         </Page>
@@ -153,7 +153,7 @@ function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
               </div>
               <Link
                 to={`/day/${d.id}`}
-                className="absolute bottom-[2.2%] left-1/2 -translate-x-1/2 rounded-full bg-paper/90 px-3 py-1 font-serif text-sm text-ink shadow hover:bg-white"
+                className="absolute bottom-[2.2%] left-1/2 -translate-x-1/2 rounded-full bg-print/90 px-3 py-1 font-serif text-sm text-printink shadow hover:bg-print"
               >
                 открыть день →
               </Link>
@@ -161,7 +161,7 @@ function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
           </Page>
         ))}
         <Page className="!bg-[#3b2f27]">
-          <div className="flex h-full items-center justify-center p-8 text-center font-serif text-xl italic text-paper/60">продолжение следует…</div>
+          <div className="flex h-full items-center justify-center p-8 text-center font-serif text-xl italic text-print/60">продолжение следует…</div>
         </Page>
       </HTMLFlipBook>
       <div className="mt-4 flex items-center gap-4 text-sm text-muted">
@@ -179,20 +179,91 @@ function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
   );
 }
 
-/** Лента: 5–7 дней рядом — проверка, что это один дневник, но каждый день свой. */
+/** Лента: отпечатки сушатся на верёвке. Тянуть мышью или листать пальцем вбок. */
 function Feed({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null);
+  const [grabbing, setGrabbing] = useState(false);
+
+  const onDown = (e: RPointerEvent) => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || !ref.current) return;
+    drag.current = { x: e.clientX, left: ref.current.scrollLeft, moved: false };
+  };
+  const onMove = (e: RPointerEvent) => {
+    const d = drag.current;
+    if (!d || !ref.current) return;
+    const dx = e.clientX - d.x;
+    if (!d.moved && Math.abs(dx) > 6) {
+      d.moved = true;
+      setGrabbing(true);
+    }
+    if (d.moved) ref.current.scrollLeft = d.left - dx;
+  };
+  const onUp = () => {
+    setGrabbing(false);
+    // клик после перетаскивания не должен открывать день
+    setTimeout(() => (drag.current = null), 0);
+  };
+
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-      {days.map((d) => (
-        <Link key={d.id} to={`/day/${d.id}`} className="group block">
-          <Poster day={d} pageNumber={nums.get(d.id)} className="rounded-[2px] shadow-md transition group-hover:-translate-y-1 group-hover:shadow-xl" />
-          <PaletteStrip palette={d.style.palette} className="mt-2 h-1.5" />
-          <p className="mt-1.5 font-serif text-base leading-tight">{d.title}</p>
-          <p className="text-xs text-muted">
-            {formatDate(d.date)} · {techniqueName(d.style.technique)}
-          </p>
-        </Link>
-      ))}
+    <div>
+      <div
+        ref={ref}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerLeave={onUp}
+        onClickCapture={(e) => drag.current?.moved && e.preventDefault()}
+        className={`-mx-4 overflow-x-auto overscroll-x-contain px-4 [scrollbar-width:thin] ${grabbing ? "cursor-grabbing select-none" : "cursor-grab"}`}
+      >
+        <div className="relative flex w-max gap-7 pb-6 pt-3 sm:gap-9">
+          {/* верёвка */}
+          <div aria-hidden className="absolute -left-4 -right-4 top-[22px] h-px bg-text/35" />
+          {days.map((d, i) => {
+            const tilt = ((hash(d.id) % 9) - 4) * 0.5; // ±2°
+            return (
+              <Link key={d.id} to={`/day/${d.id}`} draggable={false} className="group relative block w-40 shrink-0 pt-2 outline-none sm:w-48 lg:w-52">
+                <Pin />
+                <div
+                  className="origin-top transition-transform duration-500 ease-out group-hover:-translate-y-1.5 group-hover:!rotate-0 group-focus-visible:-translate-y-1.5"
+                  style={{ transform: `rotate(${tilt}deg)` }}
+                >
+                  <Poster
+                    day={d}
+                    develop
+                    pageNumber={nums.get(d.id)}
+                    className="rounded-[2px] shadow-print transition-shadow duration-500 group-hover:shadow-print-lift group-focus-visible:ring-2 group-focus-visible:ring-safelight"
+                  />
+                </div>
+                <p className="mt-4 font-serif text-lg leading-tight group-hover:text-safelight">{d.title}</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  {formatDate(d.date)} · {techniqueName(d.style.technique)}
+                </p>
+                <PaletteStrip palette={d.style.palette} className="mt-2 h-1" />
+                {i === 0 && <span className="sr-only">Лента листается вбок</span>}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+      {days.length > 2 && <p className="mt-1 font-hand text-xl text-safelight">тяни вбок, чтобы листать →</p>}
     </div>
   );
 }
+
+/** Деревянная прищепка поверх верёвки. */
+function Pin() {
+  return (
+    <svg aria-hidden viewBox="0 0 14 36" className="absolute left-1/2 top-0 z-10 h-9 w-3.5 -translate-x-1/2 text-muted" fill="none">
+      <rect x="1.5" y="0.5" width="11" height="35" rx="2.5" fill="currentColor" />
+      <path d="M7 1v34" stroke="rgb(var(--room))" strokeWidth="1" />
+      <circle cx="7" cy="14" r="2.6" stroke="rgb(var(--room))" strokeWidth="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+const hash = (s: string) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};

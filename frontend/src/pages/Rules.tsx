@@ -122,7 +122,7 @@ export default function Rules() {
             <ol className="mt-5 space-y-2">
               {CONSTANT.map((c, i) => (
                 <li key={c.t} className="flex gap-3">
-                  <span className="w-4 shrink-0 font-serif text-lg font-semibold leading-tight text-accent">{i + 1}</span>
+                  <span className="w-4 shrink-0 font-serif text-lg font-semibold leading-tight text-safelight">{i + 1}</span>
                   <span>
                     <span className="block font-medium leading-tight">{c.t}</span>
                     <span className="block text-sm text-muted">{c.d}</span>
@@ -158,11 +158,11 @@ export default function Rules() {
               <div key={id}>
                 {ex ? (
                   <Link to={`/day/${ex.id}`} className="block">
-                    <Poster day={ex} width={300} className="rounded-[2px] shadow-[0_20px_50px_-20px_rgba(60,40,20,0.45)]" />
+                    <Poster day={ex} width={300} className="rounded-[2px] shadow-print" />
                     <PaletteStrip palette={ex.style.palette} className="mt-2 h-1.5 !rounded-none" />
                   </Link>
                 ) : (
-                  <div className="aspect-[9/16] bg-paper2" />
+                  <div className="aspect-[9/16] bg-room2" />
                 )}
                 <p className="mt-3 font-serif text-2xl font-semibold leading-none">{t.name}</p>
                 <p className="mt-1 text-sm text-muted">{t.ref}</p>
@@ -201,7 +201,7 @@ export default function Rules() {
                 <tr key={cond}>
                   <td className="py-1.5 pr-3">{cond}</td>
                   {pts.map((p, i) => (
-                    <td key={i} className={`py-1.5 text-center ${p ? "font-semibold text-accent" : ""}`}>
+                    <td key={i} className={`py-1.5 text-center ${p ? "font-semibold text-safelight" : ""}`}>
                       {p ? `+${p}` : ""}
                     </td>
                   ))}
@@ -234,7 +234,7 @@ export default function Rules() {
         <Link to="/lab" className="btn-primary">
           Покрутить параметры в Лаборатории
         </Link>
-        <a href={DOC} target="_blank" rel="noreferrer" className="text-sm underline decoration-ink/30 underline-offset-4 hover:decoration-ink">
+        <a href={DOC} target="_blank" rel="noreferrer" className="text-sm underline decoration-text/30 underline-offset-4 hover:decoration-text">
           полное описание визуальной системы
         </a>
       </div>
@@ -246,7 +246,7 @@ function Section({ n, title, children }: { n: string; title: string; children: R
   return (
     <section className="mt-14">
       <h2 className="mb-6 flex items-baseline gap-3 font-serif text-4xl font-semibold leading-tight">
-        <span className="text-accent">{n}</span>
+        <span className="text-safelight">{n}</span>
         {title}
       </h2>
       {children}
@@ -257,19 +257,19 @@ function Section({ n, title, children }: { n: string; title: string; children: R
 /** Схема страницы: где стоят постоянные элементы. Номера — как в списке рядом. */
 function Schema() {
   const tag = (n: number, cls: string) => (
-    <span className={`absolute grid h-5 w-5 place-items-center rounded-full bg-accent font-sans text-[11px] font-semibold text-paper ${cls}`}>{n}</span>
+    <span className={`absolute grid h-5 w-5 place-items-center rounded-full bg-safelight font-sans text-[11px] font-semibold text-onlight ${cls}`}>{n}</span>
   );
   return (
-    <div className="relative mx-auto aspect-[9/16] w-full max-w-[220px] rounded-[2px] bg-[#faf6ee] shadow-[0_20px_50px_-20px_rgba(60,40,20,0.45)]">
-      <div className="absolute inset-[6%] border border-dashed border-ink/15" />
-      <p className="absolute left-[6%] top-[5%] font-serif text-[10px] uppercase tracking-wide text-ink/60">21 ноября 2026</p>
-      <p className="absolute left-[6%] top-[9%] font-serif text-lg font-semibold leading-none text-ink/80">Название дня</p>
+    <div className="relative mx-auto aspect-[9/16] w-full max-w-[220px] rounded-[2px] bg-print shadow-print">
+      <div className="absolute inset-[6%] border border-dashed border-printink/15" />
+      <p className="absolute left-[6%] top-[5%] font-serif text-[10px] uppercase tracking-wide text-printink/60">21 ноября 2026</p>
+      <p className="absolute left-[6%] top-[9%] font-serif text-lg font-semibold leading-none text-printink/80">Название дня</p>
       <div className="absolute bottom-[30%] left-[6%] right-[6%] top-[17%] bg-white p-[3%] shadow">
-        <div className="h-full w-full bg-paper2" />
+        <div className="h-full w-full bg-printink/10" />
       </div>
-      <p className="absolute bottom-[19%] left-[9%] font-hand text-sm text-ink/60">— запах мандаринов</p>
-      <p className="absolute bottom-[9%] left-[6%] font-hand text-lg leading-none text-ink/80">шли по первому снегу</p>
-      <p className="absolute bottom-[3.5%] right-[6%] font-serif text-[10px] text-ink/50">— 08</p>
+      <p className="absolute bottom-[19%] left-[9%] font-hand text-sm text-printink/60">— запах мандаринов</p>
+      <p className="absolute bottom-[9%] left-[6%] font-hand text-lg leading-none text-printink/80">шли по первому снегу</p>
+      <p className="absolute bottom-[3.5%] right-[6%] font-serif text-[10px] text-printink/50">— 08</p>
       {tag(1, "-right-2 -top-2")}
       {tag(2, "-left-2 top-[4.5%]")}
       {tag(3, "-left-2 top-[9.5%]")}

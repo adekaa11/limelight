@@ -65,23 +65,23 @@ export default function DayView() {
       <div className="mb-4 grid grid-cols-2 items-center [&>*]:min-w-0 gap-x-4 gap-y-3 text-sm text-muted sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <header className="order-first col-span-2 text-center sm:order-none sm:col-span-1 sm:col-start-2 sm:row-start-1">
           <p className="label">{formatDate(day.date)}</p>
-          <h1 className="mt-1 font-serif text-4xl font-semibold leading-none text-ink">{day.title}</h1>
+          <h1 className="mt-1 font-serif text-4xl font-semibold leading-none text-text">{day.title}</h1>
         </header>
         {prev ? (
-          <Link to={`/day/${prev.id}`} className="min-w-0 max-w-full truncate justify-self-start hover:text-ink sm:col-start-1 sm:row-start-1">
+          <Link to={`/day/${prev.id}`} className="min-w-0 max-w-full truncate justify-self-start hover:text-text sm:col-start-1 sm:row-start-1">
             ← {prev.title}
           </Link>
         ) : (
-          <Link to="/" className="justify-self-start hover:text-ink sm:col-start-1 sm:row-start-1">
+          <Link to="/" className="justify-self-start hover:text-text sm:col-start-1 sm:row-start-1">
             ← в архив
           </Link>
         )}
         {next ? (
-          <Link to={`/day/${next.id}`} className="col-start-2 min-w-0 max-w-full truncate justify-self-end hover:text-ink sm:col-start-3 sm:row-start-1">
+          <Link to={`/day/${next.id}`} className="col-start-2 min-w-0 max-w-full truncate justify-self-end hover:text-text sm:col-start-3 sm:row-start-1">
             {next.title} →
           </Link>
         ) : (
-          <Link to="/" className="col-start-2 justify-self-end hover:text-ink sm:col-start-3 sm:row-start-1">
+          <Link to="/" className="col-start-2 justify-self-end hover:text-text sm:col-start-3 sm:row-start-1">
             в архив →
           </Link>
         )}
@@ -122,7 +122,7 @@ export default function DayView() {
       {day.folder && <p className="mt-3 text-center font-mono text-xs text-muted">days/{day.folder}/</p>}
       {day.video_url && (
         <p className="mt-1 text-center text-xs">
-          <a className="text-muted underline hover:text-ink" href={day.video_url} target="_blank" rel="noreferrer">
+          <a className="text-muted underline hover:text-text" href={day.video_url} target="_blank" rel="noreferrer">
             готовое видео в папке дня
           </a>
         </p>
@@ -169,7 +169,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
               </span>
             ))}
           </div>
-          {!!ta.details.length && <p className="mt-2 font-hand text-xl leading-tight text-ink/80">{ta.details.join(" · ")}</p>}
+          {!!ta.details.length && <p className="mt-2 font-hand text-xl leading-tight text-safelight">{ta.details.join(" · ")}</p>}
 
           <div className="mt-4 grid grid-cols-4 gap-1.5">
             {day.photos.map((p, i) => (
@@ -185,7 +185,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
           </div>
 
           {day.song && (
-            <div className="mt-4 rounded-sm bg-paper2/60 p-3">
+            <div className="mt-4 rounded-sm bg-room2/60 p-3">
               <p className="font-serif text-lg leading-tight">
                 ♪ {day.song.title ?? "Песня"}
                 {day.song.artist && <span className="text-muted"> — {day.song.artist}</span>}
@@ -220,7 +220,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
             ))}
           </ol>
           <p className="label mt-4">на экране</p>
-          <ol className="mt-2 space-y-2 leading-snug text-ink/85">
+          <ol className="mt-2 space-y-2 leading-snug text-text/85">
             {(showAll ? rules : rules.slice(0, 3)).map((e, i) => (
               <li key={i} className="flex gap-2">
                 <span className="text-muted">→</span>
@@ -229,7 +229,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
             ))}
           </ol>
           {rules.length > 3 && (
-            <button className="mt-2 text-xs text-muted underline hover:text-ink" onClick={() => setShowAll((v) => !v)}>
+            <button className="mt-2 text-xs text-muted underline hover:text-text" onClick={() => setShowAll((v) => !v)}>
               {showAll ? "свернуть" : `показать все (${rules.length})`}
             </button>
           )}
@@ -246,7 +246,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
             {tech?.ref} · для: {tech?.when}
           </p>
           <PaletteStrip palette={day.style.palette} className="mt-3 h-8 !rounded-sm" />
-          <div className="mt-1 flex justify-between font-mono text-[10px] text-muted">
+          <div className="mt-1 flex justify-between font-mono text-[11px] text-muted">
             {day.style.palette.map((c, i) => (
               <span key={i}>{i === 0 ? `фон ${c}` : c}</span>
             ))}
@@ -258,7 +258,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
             <Meter label={`шрифт ${day.style.font_weight}`} v={(day.style.font_weight - 300) / 500} />
           </div>
           <p className="mt-3 text-sm">смена кадра: каждый {day.style.beat_step === 1 ? "" : `${day.style.beat_step}-й `}бит</p>
-          <p className="mt-1 font-hand text-2xl">«{day.style.caption}»</p>
+          <p className="mt-1 font-hand text-2xl text-safelight">«{day.style.caption}»</p>
           <p className="mt-3 text-sm">
             голос: {day.voice.name.replace("ru-RU-", "").replace("Neural", "")}, темп {day.voice.rate}, высота {day.voice.pitch}
           </p>
@@ -284,8 +284,8 @@ function Meter({ label, v }: { label: string; v: number }) {
   return (
     <div className="flex items-center gap-3 text-xs">
       <span className="w-24 text-muted">{label}</span>
-      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/10">
-        <span className="block h-full bg-ink/70" style={{ width: `${Math.max(0, Math.min(1, v)) * 100}%` }} />
+      <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-text/10">
+        <span className="block h-full bg-text/70" style={{ width: `${Math.max(0, Math.min(1, v)) * 100}%` }} />
       </span>
       <span className="w-8 text-right font-mono">{v.toFixed(2)}</span>
     </div>

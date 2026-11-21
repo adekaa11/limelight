@@ -41,13 +41,13 @@ export default function Year() {
         </div>
         <div className="flex gap-1">
           {(years.length ? years : [y]).map((yy) => (
-            <button key={yy} onClick={() => setYear(yy)} className={`rounded-full px-3 py-1 text-sm ${yy === y ? "bg-ink text-paper" : "text-muted hover:text-ink"}`}>
+            <button key={yy} onClick={() => setYear(yy)} className={`rounded-full px-3 py-1 text-sm ${yy === y ? "seg-on" : "text-muted hover:text-text"}`}>
               {yy}
             </button>
           ))}
         </div>
       </div>
-      <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-x-10 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {MONTHS.map((name, mi) => (
           <Month key={mi} year={y} month={mi} name={name} byDate={byDate} hover={hover} setHover={setHover} />
         ))}
@@ -94,10 +94,10 @@ function Month({
   const cells: (number | null)[] = [...Array(offset).fill(null), ...Array.from({ length: total }, (_, i) => i + 1)];
   return (
     <section>
-      <h2 className="mb-2 font-serif text-2xl">{name}</h2>
-      <div className="grid grid-cols-7 gap-1 text-center">
+      <h2 className="mb-3 font-serif text-2xl">{name}</h2>
+      <div className="grid grid-cols-7 gap-1.5 text-center">
         {WEEK.map((w) => (
-          <span key={w} className="text-[10px] uppercase tracking-wider text-muted/70">
+          <span key={w} className="text-[11px] uppercase tracking-wider text-muted">
             {w}
           </span>
         ))}
@@ -107,7 +107,7 @@ function Month({
           const day = byDate.get(iso);
           if (!day)
             return (
-              <span key={i} className="grid aspect-square place-items-center text-[11px] text-muted/45">
+              <span key={i} className="grid aspect-square place-items-center text-[11px] text-muted/25">
                 {d}
               </span>
             );
@@ -122,16 +122,16 @@ function Month({
               onBlur={() => setHover(null)}
               className="relative block aspect-square"
             >
-              <span className="flex h-full w-full overflow-hidden rounded-[2px] shadow-sm">
+              <span className="flex h-full w-full overflow-hidden rounded-[2px] transition duration-300 hover:scale-110" style={{ boxShadow: `0 4px 18px -3px ${day.style.palette[2] ?? day.style.palette[0]}` }}>
                 {day.style.palette.map((c, k) => (
                   <span key={k} className="flex-1" style={{ background: c }} />
                 ))}
               </span>
-              <span className="absolute left-1 top-0.5 text-[10px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.7)]">{d}</span>
+              <span className="absolute left-1 top-0.5 text-[11px] font-semibold text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.7)]">{d}</span>
               {hover === iso && (
                 <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 block w-32 -translate-x-1/2 text-left">
-                  <Poster day={day} width={240} className="rounded-[2px] shadow-[0_20px_50px_-20px_rgba(60,40,20,0.45)]" />
-                  <span className="mt-1 block rounded-[2px] bg-paper/95 px-1.5 py-1 font-serif text-sm leading-tight text-ink shadow-sm">{day.title}</span>
+                  <Poster day={day} width={240} className="rounded-[2px] shadow-print" />
+                  <span className="mt-1 block rounded-[2px] bg-room/95 px-1.5 py-1 font-serif text-sm leading-tight text-text shadow-sm">{day.title}</span>
                 </span>
               )}
             </Link>
