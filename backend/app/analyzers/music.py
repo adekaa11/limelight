@@ -213,6 +213,15 @@ def analyze_audio(path: str, hint_bpm: float | None = None) -> dict:
     centroid = float(librosa.feature.spectral_centroid(y=y, sr=sr).mean())
     valence = 0.45 * (1.0 if mode == "major" else 0.0) + 0.3 * _norm(bpm, 60, 150) + 0.25 * _norm(centroid, 1200, 3500)
 
+    # тихая песня с темпом > 150 — почти всегда удвоение (Norah Jones давала 177 вместо 88)
+    if bpm > 150 and energy < 0.55 and len(beats) > 8:
+        bpm /= 2
+        b0, b1 = beats[0::2], beats[1::2]
+        frames = librosa.time_to_frames(np.array(beats), sr=sr, hop_length=hop)
+        frames = np.clip(frames, 0, len(onset_env) - 1)
+        strength0, strength1 = onset_env[frames[0::2]].mean(), onset_env[frames[1::2]].mean()
+        beats = b0 if strength0 >= strength1 else b1  # оставляем более сильную долю
+
     return {
         "bpm": round(bpm, 1),
         "mode": mode,
