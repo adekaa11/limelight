@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
 import logging
 import tempfile
@@ -57,7 +58,11 @@ def normalize_photo(data: bytes) -> bytes:
         register_heif_opener()
     except ImportError:
         pass
-    img = ImageOps.exif_transpose(Image.open(io.BytesIO(data)))
+    img = Image.open(io.BytesIO(data))
+    if img.format == "JPEG":
+        # декодируем сразу в уменьшенном масштабе (1/2, 1/4, 1/8): 12 Мп не распаковываются целиком
+        img.draft("RGB", (MAX_SIDE, MAX_SIDE))
+    img = ImageOps.exif_transpose(img)
     if img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
     img.thumbnail((MAX_SIDE, MAX_SIDE))
@@ -131,7 +136,21 @@ async def _voice(text: str, voice: dict, path: str, explanation: list[str]) -> t
     return voice, out
 
 
-async def create_day(
+# Один день за раз: анализ песни и фото тяжёлый по памяти, два параллельных дня роняют 512 МБ.
+# Остальные запросы ждут в очереди (фронт показывает экран загрузки).
+_day_lock = asyncio.Semaphore(1)
+
+
+async def create_day(storage: Storage, text: str, photos: list[Upload], song_url: str | None,
+                     song_file: Upload | None, date: str | None) -> dict:
+    async with _day_lock:
+        try:
+            return await _create_day(storage, text, photos, song_url, song_file, date)
+        finally:
+            gc.collect()
+
+
+async def _create_day(
     storage: Storage,
     text: str,
     photos: list[Upload],
