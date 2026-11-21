@@ -47,4 +47,4 @@
 
 ## Ссылки
 
-Прототип: https://proyavka-eight.vercel.app · Видео: [ВПИСАТЬ] · Код: https://github.com/adekaa11/proyavka
+Прототип: https://limelight-diary.vercel.app · Видео: [ВПИСАТЬ] · Код: https://github.com/adekaa11/limelight

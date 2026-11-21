@@ -6,7 +6,7 @@ import PaletteStrip from "../components/PaletteStrip";
 import { useDays } from "../lib/useDays";
 import { TECHNIQUES, type Day, type Technique } from "../types";
 
-const DOC = "https://github.com/adekaa11/proyavka/blob/main/docs/visual-system.md";
+const DOC = "https://github.com/adekaa11/limelight/blob/main/docs/visual-system.md";
 
 /** Постоянные элементы страницы — номера совпадают с метками на схеме. */
 const CONSTANT = [

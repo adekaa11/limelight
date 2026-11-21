@@ -8,7 +8,7 @@
 
 | | |
 |---|---|
-| Демо | https://proyavka-eight.vercel.app |
+| Демо | https://limelight-diary.vercel.app |
 | Видео (до 3 мин) | [ВПИСАТЬ: ссылка] |
 | API | https://proyavka-api.onrender.com/docs (бесплатный сервер засыпает: первый запрос до минуты) |
 | Визуальная система | [docs/visual-system.md](docs/visual-system.md) |
