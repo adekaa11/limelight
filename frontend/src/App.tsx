@@ -5,6 +5,7 @@ import Year from "./pages/Year";
 import NewDay from "./pages/NewDay";
 import DayView from "./pages/DayView";
 import Lab from "./pages/Lab";
+import Rules from "./pages/Rules";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/new" element={<NewDay />} />
         <Route path="/day/:id" element={<DayView />} />
         <Route path="/lab" element={<Lab />} />
+        <Route path="/rules" element={<Rules />} />
         <Route path="*" element={<p className="py-20 text-center font-serif text-2xl">Такой страницы в дневнике нет</p>} />
       </Route>
     </Routes>

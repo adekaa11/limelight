@@ -7,6 +7,7 @@ const links = [
   { to: "/", label: "Архив" },
   { to: "/year", label: "Год в цветах" },
   { to: "/lab", label: "Лаборатория" },
+  { to: "/rules", label: "Как это работает" },
 ];
 
 export default function Layout() {
@@ -20,7 +21,7 @@ export default function Layout() {
             Проявка
             {USE_MOCK && <span className="ml-2 align-middle font-sans text-[10px] font-normal uppercase tracking-widest text-muted">демо</span>}
           </NavLink>
-          <nav className="hidden gap-1 sm:flex">
+          <nav className="hidden gap-1 md:flex">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} end className={({ isActive }) => `rounded-full px-3 py-1.5 text-sm ${isActive ? "bg-ink/5 text-ink" : "text-muted hover:text-ink"}`}>
                 {l.label}
@@ -31,9 +32,9 @@ export default function Layout() {
             + Записать день
           </NavLink>
         </div>
-        <nav className="flex justify-center gap-1 border-t border-line/50 py-1.5 sm:hidden">
+        <nav className="flex justify-center border-t border-line/50 py-1.5 md:hidden">
           {links.map((l) => (
-            <NavLink key={l.to} to={l.to} end className={({ isActive }) => `rounded-full px-3 py-1 text-xs ${isActive ? "bg-ink/5 text-ink" : "text-muted"}`}>
+            <NavLink key={l.to} to={l.to} end className={({ isActive }) => `whitespace-nowrap rounded-full px-1.5 py-1 text-xs ${isActive ? "bg-ink/5 text-ink" : "text-muted"}`}>
               {l.label}
             </NavLink>
           ))}

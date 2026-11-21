@@ -138,6 +138,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
   const ta = day.text_analysis;
   const tech = TECHNIQUES.find((t) => t.id === day.style.technique);
   const [open, setOpen] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   return (
     <section className="mx-auto mt-14 max-w-5xl border-t border-line pt-8">
       <h2 className="font-serif text-4xl font-semibold">Рецепт дня</h2>
@@ -220,13 +221,18 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
           </ol>
           <p className="label mt-4">на экране</p>
           <ol className="mt-2 space-y-2 leading-snug text-ink/85">
-            {rules.map((e, i) => (
+            {(showAll ? rules : rules.slice(0, 3)).map((e, i) => (
               <li key={i} className="flex gap-2">
                 <span className="text-muted">→</span>
                 <span>{e}</span>
               </li>
             ))}
           </ol>
+          {rules.length > 3 && (
+            <button className="mt-2 text-xs text-muted underline hover:text-ink" onClick={() => setShowAll((v) => !v)}>
+              {showAll ? "свернуть" : `показать все (${rules.length})`}
+            </button>
+          )}
           {day.meta && (
             <p className="mt-3 text-[11px] text-muted">
               анализ текста: {day.meta.llm} · песня: {day.meta.song_source}

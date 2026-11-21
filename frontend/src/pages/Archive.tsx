@@ -23,9 +23,9 @@ const Page = forwardRef<HTMLDivElement, { children: ReactNode; className?: strin
 type View = "book" | "feed";
 const loadView = (): View => {
   try {
-    return (localStorage.getItem("archive-view") as View) || "book";
+    return (localStorage.getItem("archive-view") as View) || "feed";
   } catch {
-    return "book";
+    return "feed";
   }
 };
 
@@ -87,7 +87,7 @@ export default function Archive() {
           ))}
         </select>
         <div className="flex rounded-full border border-line p-0.5 text-sm">
-          {(["book", "feed"] as View[]).map((v) => (
+          {(["feed", "book"] as View[]).map((v) => (
             <button key={v} onClick={() => setView(v)} className={`rounded-full px-3 py-1 ${view === v ? "bg-ink text-paper" : "text-muted"}`}>
               {v === "book" ? "Книга" : "Лента"}
             </button>
