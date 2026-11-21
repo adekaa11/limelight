@@ -151,7 +151,7 @@ def _norm(x: float, lo: float, hi: float) -> float:
     return float(max(0.0, min(1.0, (x - lo) / (hi - lo))))
 
 
-def analyze_audio(path: str) -> dict:
+def analyze_audio(path: str, hint_bpm: float | None = None) -> dict:
     """librosa: темп, биты, части песни, лад, энергия, валентность. ~1-2 сек на 30-сек превью."""
     import librosa  # тяжёлый импорт только когда нужен
     import numpy as np
@@ -166,7 +166,12 @@ def analyze_audio(path: str) -> dict:
     # иначе beat_track отдаёт значения сетки (117.5, 129.2...)
     hop = 256
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop)
-    tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr, hop_length=hop)
+    if hint_bpm and 50 <= hint_bpm <= 220:
+        # темп из Deezer как опора: librosa часто ошибается в 1.25-2 раза на электронике
+        tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr, hop_length=hop,
+                                                     start_bpm=float(hint_bpm), tightness=400)
+    else:
+        tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr, hop_length=hop)
     bpm = float(np.atleast_1d(tempo)[0])
     beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop)
     if len(beat_times) > 8:
@@ -269,6 +274,7 @@ def analyze_song(song_url: str | None, file_path: str | None) -> dict:
                 "genre": genre,
                 "year": year,
                 "deezer_id": track.get("id"),
+                "deezer_bpm": track.get("bpm") or None,
             }
             tm["meta"] = round(time.monotonic() - t0 - tm["search"], 1)
             t1 = time.monotonic()
@@ -278,7 +284,7 @@ def analyze_song(song_url: str | None, file_path: str | None) -> dict:
         tmp = Path(tempfile.mkdtemp(prefix="song_")) / "preview.mp3"
         tmp.write_bytes(audio.content)
         t2 = time.monotonic()
-        res = analyze_audio(str(tmp))
+        res = analyze_audio(str(tmp), hint_bpm=float(track.get("bpm") or 0) or None)
         tm["librosa"] = round(time.monotonic() - t2, 1)
         return {**meta, "audio_path": str(tmp), "source": "deezer", "timings": tm, **res}
     except Exception as e:
