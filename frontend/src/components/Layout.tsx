@@ -42,7 +42,7 @@ export default function Layout() {
       <header className="sticky top-0 z-30 border-b border-line/70 bg-room/95">
         <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3">
           <NavLink to="/" className="mr-auto font-serif text-2xl font-semibold tracking-tight">
-            Проявка
+            LimeLight
             {USE_MOCK && <span className="ml-2 align-middle font-sans text-[11px] font-normal uppercase tracking-widest text-muted">демо</span>}
           </NavLink>
           <nav className="hidden gap-1 md:flex">

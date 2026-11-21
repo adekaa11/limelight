@@ -92,7 +92,7 @@ export default function DevelopingScreen({ phase, upload, photo, error, onRetry,
       {/* красная лампа над ванночкой */}
       <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 h-[70vh] bg-[radial-gradient(ellipse_60%_70%_at_50%_-10%,rgb(var(--safelight)/0.22),transparent_70%)]" />
       <div className="relative mx-auto max-w-4xl px-4">
-        <p className="py-4 font-serif text-2xl font-semibold tracking-tight text-text/80">Проявка</p>
+        <p className="py-4 font-serif text-2xl font-semibold tracking-tight text-text/80">LimeLight</p>
         <div className="grid items-start gap-10 pb-12 pt-2 md:grid-cols-[280px_1fr] md:pt-8">
           <div className="mx-auto w-52 md:w-full">
             {/* ванночка с проявителем: отпечаток лежит в жидкости, по ней гуляет блик */}

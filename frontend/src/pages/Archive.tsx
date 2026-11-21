@@ -139,7 +139,7 @@ function Book({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
         <Page className="!bg-[#3b2f27] text-print">
           <div className="flex h-full flex-col items-center justify-center border-[10px] border-[#3b2f27] p-8 text-center outline outline-1 outline-offset-[-18px] outline-[#c9a77c]/50">
             <p className="label !text-[#c9a77c]">дневник</p>
-            <p className="mt-4 font-serif text-5xl font-semibold">Проявка</p>
+            <p className="mt-4 font-serif text-5xl font-semibold">LimeLight</p>
             <p className="mt-4 max-w-[16rem] font-serif text-lg italic text-print/70">как ощущался каждый день</p>
             <p className="mt-10 font-hand text-2xl text-[#c9a77c]">листайте →</p>
           </div>
