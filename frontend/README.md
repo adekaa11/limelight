@@ -1,4 +1,4 @@
-# Фронтенд «Проявки» (Дан + Алимжан)
+# Фронтенд LimeLight (Дан + Алимжан)
 
 React 18 + Vite + TypeScript + Tailwind. Canvas 2D + WebAudio, без библиотек графики.
 

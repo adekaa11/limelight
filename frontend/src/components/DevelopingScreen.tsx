@@ -87,7 +87,7 @@ export default function DevelopingScreen({ phase, upload, photo, error, onRetry,
   const lift = phase === "error" ? 0.35 : 0.12 + 0.88 * p;
 
   return (
-    // экран всегда тёмный, даже при включённом свете: это сама комната проявки
+    // экран всегда тёмный, даже при включённом свете: это сама фотолаборатория
     <div data-theme="dark" className="fixed inset-0 z-40 overflow-y-auto bg-room text-text">
       {/* красная лампа над ванночкой */}
       <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 h-[70vh] bg-[radial-gradient(ellipse_60%_70%_at_50%_-10%,rgb(var(--safelight)/0.22),transparent_70%)]" />

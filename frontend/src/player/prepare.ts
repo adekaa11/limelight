@@ -18,7 +18,7 @@ export function ensureFonts() {
   if (!fontsReady) {
     const specs = [300, 400, 500, 600, 700].map((w) => `${w} 32px "Cormorant Garamond"`);
     specs.push('italic 400 32px "Cormorant Garamond"', '400 32px "Caveat"', '600 32px "Caveat"');
-    fontsReady = Promise.all(specs.map((s) => document.fonts.load(s, "Проявка 0123"))).then(
+    fontsReady = Promise.all(specs.map((s) => document.fonts.load(s, "LimeLight день 0123"))).then(
       () => undefined,
       () => undefined,
     );

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-/** Тема сайта: «dark» — комната проявки (по умолчанию), «light» — свет включён. Первичная установка — в index.html. */
+/** Тема сайта: «dark» — тёмная фотолаборатория (по умолчанию), «light» — свет включён. Первичная установка — в index.html. */
 export type Theme = "dark" | "light";
 const KEY = "theme";
 const META = { dark: "#14110F", light: "#F4EFE6" };

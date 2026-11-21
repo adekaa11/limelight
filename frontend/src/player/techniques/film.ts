@@ -25,7 +25,7 @@ export const film: TechniqueRenderer = {
     ctx.save();
     ctx.font = `500 ${1.9 * u}px Inter, sans-serif`;
     ctx.fillStyle = rgba(mixHex(pal.accents[0], "#c0622b", 0.5), 0.75);
-    ctx.fillText(`ПРОЯВКА 400   ${String((frame.index % 36) + 1).padStart(2, "0")}A   ▸`, inner.x, inner.y + inner.h + 2.4 * u);
+    ctx.fillText(`LIMELIGHT 400   ${String((frame.index % 36) + 1).padStart(2, "0")}A   ▸`, inner.x, inner.y + inner.h + 2.4 * u);
     ctx.restore();
 
     // кадр с дрожанием (gate weave) и медленным наездом
