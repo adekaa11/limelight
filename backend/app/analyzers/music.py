@@ -21,7 +21,7 @@ import httpx
 log = logging.getLogger(__name__)
 
 DEEZER = "https://api.deezer.com"
-UA = {"User-Agent": "Mozilla/5.0 (proyavka diary)"}
+UA = {"User-Agent": "Mozilla/5.0 (limelight diary)"}
 TIMEOUT = 15
 SR = 11025
 MAX_SEC = 30.0
@@ -114,7 +114,7 @@ def _first_year(c: httpx.Client, artist: str, title: str) -> int | None:
         r = c.get(
             "https://musicbrainz.org/ws/2/recording",
             params={"query": q, "fmt": "json", "limit": 10},
-            headers={"User-Agent": "ProyavkaDiary/0.1 (hackathon project)"},
+            headers={"User-Agent": "LimeLightDiary/0.1 (hackathon project)"},
             timeout=8,
         )
         years = [

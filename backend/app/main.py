@@ -21,7 +21,7 @@ from .style_engine import build_style
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Проявка API", version="0.1.0", description="Цифровой дневник: текст + фото + музыка -> воспоминание")
+app = FastAPI(title="LimeLight API", version="0.1.0", description="Цифровой дневник: текст + фото + музыка -> воспоминание")
 
 _exact = [o for o in settings.cors_origins if "*" not in o]
 _wild = [re.escape(o).replace(r"\*", "[a-z0-9-]+") for o in settings.cors_origins if "*" in o]

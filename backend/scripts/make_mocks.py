@@ -86,7 +86,7 @@ def main() -> None:
             "date": dt,
             "title": d["title"],
             "text": d["text"],
-            "photos": [f"https://picsum.photos/seed/proyavka{i}{k}/720/960" for k in range(len(d["pa"]))],
+            "photos": [f"https://picsum.photos/seed/limelight{i}{k}/720/960" for k in range(len(d["pa"]))],
             "song": {
                 "title": d["song"]["title"], "artist": d["song"]["artist"], "source_url": None, "preview_url": None,
                 "analysis": {k: song_an[k] for k in ("bpm", "mode", "energy", "valence", "genre", "year", "beats", "sections")},
