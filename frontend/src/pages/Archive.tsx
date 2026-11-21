@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useMemo, useRef, useState, type ComponentType, t
 import { Link } from "react-router-dom";
 import HTMLFlipBookRaw from "react-pageflip";
 import Poster from "../components/Poster";
+import Intro from "../components/Intro";
 import PaletteStrip from "../components/PaletteStrip";
 import { pageNumbers, useDays } from "../lib/useDays";
 import { MONTHS, formatDate } from "../lib/date";
@@ -54,23 +55,16 @@ export default function Archive() {
 
   if (error) return <p className="py-20 text-center text-muted">Не удалось открыть дневник: {error}</p>;
   if (!days) return <p className="py-20 text-center font-serif text-xl italic text-muted">листаем дневник…</p>;
-  if (!days.length)
-    return (
-      <div className="py-24 text-center">
-        <p className="font-serif text-3xl">Дневник пока пуст</p>
-        <Link to="/new" className="btn-primary mt-6">
-          Записать первый день
-        </Link>
-      </div>
-    );
+  if (!days.length) return <Intro force />;
 
   const monthLabel = (m: string) => `${MONTHS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}`;
 
   return (
     <div>
+      <Intro example={days[0]} />
       <div className="mb-6 flex flex-wrap items-end gap-3">
         <div className="mr-auto">
-          <h1 className="font-serif text-4xl font-semibold leading-none">Архив</h1>
+          <h2 className="font-serif text-4xl font-semibold leading-none">Архив</h2>
           <p className="mt-1 text-sm text-muted">
             {days.length} {days.length === 1 ? "день" : days.length < 5 ? "дня" : "дней"} · старые страницы выцветают, при открытии проявляются
           </p>

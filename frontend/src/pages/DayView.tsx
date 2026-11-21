@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
-import MemoryPlayer, { type MemoryPlayerHandle } from "../player/MemoryPlayer";
+import MemoryPlayer, { type MemoryPlayerHandle, type PlayerState } from "../player/MemoryPlayer";
 import { Renderer } from "../player/renderer";
 import { downloadBlob, canExport } from "../player/exportVideo";
 import PaletteStrip from "../components/PaletteStrip";
@@ -17,6 +17,7 @@ export default function DayView() {
   const player = useRef<MemoryPlayerHandle>(null);
   const [exporting, setExporting] = useState<number | null>(null);
   const [exportMsg, setExportMsg] = useState<string | null>(null);
+  const [pstate, setPstate] = useState<PlayerState>("loading");
 
   useEffect(() => {
     setDay(null);
@@ -56,53 +57,78 @@ export default function DayView() {
   };
 
   const zip = zipUrl(day.id);
+  const playLabel = pstate === "playing" ? "❚❚ Пауза" : pstate === "paused" ? "▶ Дальше" : pstate === "ended" ? "↻ Ещё раз" : "▶ Открыть день";
+  const rowBtn = "whitespace-nowrap px-2.5 text-xs sm:px-4 sm:text-sm";
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between text-sm text-muted">
-        {prev ? <Link to={`/day/${prev.id}`}>← {prev.title}</Link> : <span />}
-        <Link to="/" className="hidden sm:inline">
-          в архив
-        </Link>
-        {next ? <Link to={`/day/${next.id}`}>{next.title} →</Link> : <span />}
-      </div>
-
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,420px)_1fr]">
-        <div className="mx-auto w-full max-w-[420px] lg:sticky lg:top-20 lg:self-start">
-          <MemoryPlayer ref={player} day={day} pageNumber={nums.get(day.id)} />
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <VoiceButton day={day} />
-            {zip ? (
-              <a className="btn" href={zip}>
-                ⇣ Папка дня (zip)
-              </a>
-            ) : (
-              <button className="btn" disabled title="Доступно с подключённым бэкендом">
-                ⇣ Папка дня (zip)
-              </button>
-            )}
-            <button className="btn" onClick={doExport} disabled={exporting !== null || !canExport()} title={canExport() ? "" : "Нужен Chrome, Edge или Firefox"}>
-              {exporting !== null ? `● запись ${Math.round(exporting * 100)}%` : "⏺ Экспорт видео"}
-            </button>
-          </div>
-          {exporting !== null && <p className="mt-2 text-center text-xs text-muted">Пишем видео в реальном времени (до 30 с). Не сворачивайте вкладку.</p>}
-          {exportMsg && exporting === null && <p className="mt-2 text-center text-xs text-muted">{exportMsg}</p>}
-          {day.video_url && (
-            <p className="mt-2 text-center text-xs">
-              <a className="underline" href={day.video_url} target="_blank" rel="noreferrer">
-                готовое видео в папке дня
-              </a>
-            </p>
-          )}
-        </div>
-
-        <div>
+      <div className="mb-4 grid grid-cols-2 items-center [&>*]:min-w-0 gap-x-4 gap-y-3 text-sm text-muted sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+        <header className="order-first col-span-2 text-center sm:order-none sm:col-span-1 sm:col-start-2 sm:row-start-1">
           <p className="label">{formatDate(day.date)}</p>
-          <h1 className="mt-1 font-serif text-4xl font-semibold leading-tight sm:text-5xl">{day.title}</h1>
-          {day.folder && <p className="mt-1 font-mono text-xs text-muted">📁 days/{day.folder}/</p>}
-          <Recipe day={day} rules={rules} />
-        </div>
+          <h1 className="mt-1 font-serif text-4xl font-semibold leading-none text-ink">{day.title}</h1>
+        </header>
+        {prev ? (
+          <Link to={`/day/${prev.id}`} className="min-w-0 max-w-full truncate justify-self-start hover:text-ink sm:col-start-1 sm:row-start-1">
+            ← {prev.title}
+          </Link>
+        ) : (
+          <Link to="/" className="justify-self-start hover:text-ink sm:col-start-1 sm:row-start-1">
+            ← в архив
+          </Link>
+        )}
+        {next ? (
+          <Link to={`/day/${next.id}`} className="col-start-2 min-w-0 max-w-full truncate justify-self-end hover:text-ink sm:col-start-3 sm:row-start-1">
+            {next.title} →
+          </Link>
+        ) : (
+          <Link to="/" className="col-start-2 justify-self-end hover:text-ink sm:col-start-3 sm:row-start-1">
+            в архив →
+          </Link>
+        )}
       </div>
+
+      {/* плеер крупно и по центру: высота страницы помещается в экран вместе с кнопками */}
+      <div className="mx-auto mt-5" style={{ width: "min(100%, 480px, calc((100svh - 230px) * 9 / 16))", minWidth: "min(100%, 300px)" }}>
+        <MemoryPlayer ref={player} day={day} pageNumber={nums.get(day.id)} overlayClass="sm:hidden" onStateChange={setPstate} />
+      </div>
+
+      <div className="mx-auto mt-4 flex max-w-xl justify-center gap-1 sm:gap-2">
+        <button className={`btn-primary ${rowBtn}`} onClick={() => player.current?.toggle()} disabled={pstate === "loading" || exporting !== null}>
+          {playLabel}
+        </button>
+        <VoiceButton day={day} className={rowBtn} />
+        {zip ? (
+          <a className={`btn ${rowBtn}`} href={zip}>
+            ⇣ <span className="sm:hidden">Папка</span>
+            <span className="hidden sm:inline">Скачать папку</span>
+          </a>
+        ) : (
+          <button className={`btn ${rowBtn}`} disabled title="Доступно с подключённым бэкендом">
+            ⇣ <span className="sm:hidden">Папка</span>
+            <span className="hidden sm:inline">Скачать папку</span>
+          </button>
+        )}
+        <button
+          className={`btn ${rowBtn}`}
+          onClick={doExport}
+          disabled={exporting !== null || !canExport()}
+          title={canExport() ? "Записать видео .webm (до 30 с) и сохранить в папку дня" : "Нужен Chrome, Edge или Firefox"}
+        >
+          {exporting !== null ? `● ${Math.round(exporting * 100)}%` : "● Видео"}
+        </button>
+      </div>
+      {exporting !== null && <p className="mt-2 text-center text-xs text-muted">Пишем видео в реальном времени (до 30 с). Не сворачивай вкладку.</p>}
+      {exportMsg && exporting === null && <p className="mt-2 text-center text-xs text-muted">{exportMsg}</p>}
+      {day.folder && <p className="mt-3 text-center font-mono text-xs text-muted">days/{day.folder}/</p>}
+      {day.video_url && (
+        <p className="mt-1 text-center text-xs">
+          <a className="text-muted underline hover:text-ink" href={day.video_url} target="_blank" rel="noreferrer">
+            готовое видео в папке дня
+          </a>
+        </p>
+      )}
+
+      <Recipe day={day} rules={rules} />
     </div>
   );
 }
@@ -113,11 +139,11 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
   const tech = TECHNIQUES.find((t) => t.id === day.style.technique);
   const [open, setOpen] = useState(false);
   return (
-    <section className="mt-8">
-      <h2 className="font-serif text-2xl">Рецепт дня</h2>
-      <p className="text-sm text-muted">Что вы дали системе, какие правила сработали и что получилось.</p>
+    <section className="mx-auto mt-14 max-w-5xl border-t border-line pt-8">
+      <h2 className="font-serif text-4xl font-semibold">Рецепт дня</h2>
+      <p className="mt-1 text-muted">Что ты дал системе, какие правила сработали и что из этого получилось.</p>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <Block n="1" title="Вход">
           <p className={`font-serif text-lg leading-snug ${open ? "" : "line-clamp-4"}`}>«{day.text}»</p>
           {day.text.length > 180 && (
@@ -133,12 +159,12 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
             <span className="chip">валентность {ta.valence.toFixed(2)}</span>
             {ta.people.map((p) => (
               <span key={p} className="chip">
-                👤 {p}
+                {p}
               </span>
             ))}
             {ta.places.map((p) => (
               <span key={p} className="chip">
-                📍 {p}
+                {p}
               </span>
             ))}
           </div>
@@ -184,7 +210,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
         </Block>
 
         <Block n="2" title="Сработавшие правила">
-          <ol className="space-y-1.5 text-sm">
+          <ol className="space-y-2 leading-snug">
             {day.explanation.map((e, i) => (
               <li key={i} className="flex gap-2">
                 <span className="text-muted">→</span>
@@ -193,7 +219,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
             ))}
           </ol>
           <p className="label mt-4">на экране</p>
-          <ol className="mt-1.5 space-y-1.5 text-sm text-ink/80">
+          <ol className="mt-2 space-y-2 leading-snug text-ink/85">
             {rules.map((e, i) => (
               <li key={i} className="flex gap-2">
                 <span className="text-muted">→</span>
@@ -261,7 +287,7 @@ function Meter({ label, v }: { label: string; v: number }) {
 }
 
 /** Озвучка: mp3 из папки дня (edge-tts); без бэкенда — голос браузера с теми же темпом и высотой. */
-function VoiceButton({ day }: { day: Day }) {
+function VoiceButton({ day, className = "" }: { day: Day; className?: string }) {
   const [on, setOn] = useState(false);
   const audio = useRef<HTMLAudioElement | null>(null);
   // уход со страницы дня, смена дня или скрытие вкладки -> озвучка останавливается
@@ -305,8 +331,8 @@ function VoiceButton({ day }: { day: Day }) {
     }
   };
   return (
-    <button className="btn" onClick={toggle} title={day.voice.url ? "" : USE_MOCK ? "демо: голос браузера" : "голос браузера"}>
-      {on ? "■ Стоп" : "🔈 Озвучка"}
+    <button className={`btn ${className}`} onClick={toggle} title={day.voice.url ? "" : USE_MOCK ? "демо: голос браузера" : "голос браузера"}>
+      {on ? "■ Стоп" : "Озвучка"}
     </button>
   );
 }

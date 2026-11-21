@@ -8,6 +8,8 @@ import { canExport, startRecording } from "./exportVideo";
 
 export interface MemoryPlayerHandle {
   open(): Promise<void>;
+  /** Открыть, поставить на паузу или продолжить — для внешней кнопки */
+  toggle(): Promise<void>;
   /** Записывает воспоминание целиком (20–30 с, в реальном времени) и возвращает .webm */
   exportVideo(onProgress?: (p: number) => void): Promise<Blob>;
 }
@@ -18,11 +20,14 @@ interface Props {
   /** Для /lab: подменить возраст записи в днях. */
   ageDaysOverride?: number;
   className?: string;
+  /** Доп. классы кнопки «Открыть день» поверх страницы: на странице дня она нужна только на телефоне, на десктопе кнопки снаружи */
+  overlayClass?: string;
+  onStateChange?: (s: PlayerState) => void;
 }
 
-type State = "loading" | "ready" | "playing" | "paused" | "ended";
+export type PlayerState = "loading" | "ready" | "playing" | "paused" | "ended";
 
-const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer({ day, pageNumber, ageDaysOverride, className }, ref) {
+const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer({ day, pageNumber, ageDaysOverride, className, overlayClass = "", onStateChange }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
@@ -30,17 +35,20 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
   const recRef = useRef<ReturnType<typeof startRecording> | null>(null);
   const abortRef = useRef<string | null>(null); // причина прерванной записи: недописанное видео не скачиваем и не отправляем
   const progressRef = useRef<((p: number) => void) | undefined>(undefined);
-  const stateRef = useRef<State>("loading");
+  const stateRef = useRef<PlayerState>("loading");
   const dirtyRef = useRef(true);
   const optsRef = useRef({ pageNumber, ageDaysOverride });
   optsRef.current = { pageNumber, ageDaysOverride };
-  const [state, setStateRaw] = useState<State>("loading");
+  const [state, setStateRaw] = useState<PlayerState>("loading");
   const [note, setNote] = useState<string | null>(null);
 
-  const setState = useCallback((s: State) => {
+  const onStateRef = useRef(onStateChange);
+  onStateRef.current = onStateChange;
+  const setState = useCallback((s: PlayerState) => {
     stateRef.current = s;
     setStateRaw(s);
     dirtyRef.current = true;
+    onStateRef.current?.(s);
   }, []);
 
   // 720×1280 на десктопе, 540×960 на телефоне — держим 30 fps
@@ -180,10 +188,17 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
     }
   }, [setState]);
 
+  const toggle = useCallback(async () => {
+    const st = stateRef.current;
+    if (st === "ready" || st === "ended") await open();
+    else await togglePause();
+  }, [open, togglePause]);
+
   useImperativeHandle(
     ref,
     () => ({
       open,
+      toggle,
       async exportVideo(onProgress) {
         if (!canExport()) throw new Error("Этот браузер не умеет записывать видео с canvas. Откройте в Chrome, Edge или Firefox.");
         const canvas = canvasRef.current;
@@ -229,18 +244,18 @@ const MemoryPlayer = forwardRef<MemoryPlayerHandle, Props>(function MemoryPlayer
         }
       },
     }),
-    [open, ensureEngine, abortRecording, setState],
+    [open, toggle, ensureEngine, abortRecording, setState],
   );
 
   return (
     <div className={`relative select-none ${className ?? ""}`}>
       <div className="relative aspect-[9/16] w-full overflow-hidden rounded-[3px] bg-paper2 shadow-[0_20px_50px_-20px_rgba(60,40,20,0.45)]">
-        <canvas ref={canvasRef} width={W} height={H} className="block h-full w-full" onClick={togglePause} />
+        <canvas ref={canvasRef} width={W} height={H} className="block h-full w-full" onClick={toggle} />
         {state === "loading" && <div className="absolute inset-0 grid place-items-center font-serif text-lg italic text-muted">проявляем…</div>}
         {(state === "ready" || state === "ended") && (
           <button
             onClick={open}
-            className="absolute bottom-[14%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-ink/20 bg-paper/90 px-5 py-2.5 font-serif text-lg sm:px-6 sm:py-3 sm:text-xl text-ink shadow-lg backdrop-blur transition hover:bg-paper"
+            className={`${overlayClass} absolute bottom-[14%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-ink/20 bg-paper/90 px-5 py-2.5 font-serif text-lg sm:px-6 sm:py-3 sm:text-xl text-ink shadow-lg backdrop-blur transition hover:bg-paper`}
           >
             {state === "ended" ? "↻ Ещё раз" : "▶ Открыть день"}
           </button>

@@ -200,9 +200,9 @@ export default function NewDay() {
 
       {error && <p className="mt-4 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
 
-      <div className="mt-8 flex items-center justify-end gap-3">
+      <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
         {USE_MOCK && <span className="text-xs text-muted">демо-режим: бэкенд не подключён, стиль возьмётся из похожего примера</span>}
-        <button onClick={submit} disabled={!ready} className="btn-primary px-6 py-3 text-base">
+        <button onClick={submit} disabled={!ready} className="btn-primary w-full px-6 py-3 text-base sm:w-auto">
           Проявить день
         </button>
       </div>
