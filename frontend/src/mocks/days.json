@@ -126,7 +126,7 @@
   "voice": {
    "name": "ru-RU-SvetlanaNeural",
    "rate": "-15%",
-   "pitch": "-2Hz",
+   "pitch": "+0Hz",
    "url": null
   },
   "explanation": [
@@ -420,7 +420,7 @@
   "voice": {
    "name": "ru-RU-SvetlanaNeural",
    "rate": "-15%",
-   "pitch": "-2Hz",
+   "pitch": "+0Hz",
    "url": null
   },
   "explanation": [
@@ -756,7 +756,7 @@
   "voice": {
    "name": "ru-RU-SvetlanaNeural",
    "rate": "-15%",
-   "pitch": "-2Hz",
+   "pitch": "+0Hz",
    "url": null
   },
   "explanation": [
