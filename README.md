@@ -14,6 +14,26 @@
 | Визуальная система | [docs/visual-system.md](docs/visual-system.md) |
 | Контракт API | [docs/api-contract.md](docs/api-contract.md) |
 
+## Примеры дней (реальные дни команды)
+
+Все 7 записей сделаны командой через прототип: свои тексты, свои фото, песни из Deezer. Папки лежат в Supabase Storage, каждая скачивается zip-архивом со страницы дня.
+
+| Дата | Название | Папка дня | Техника | Песня |
+|---|---|---|---|---|
+| 2026-11-20 | Ночной хакатон перед сдачей | `2026-11-20_nochnoy-khakaton-pered-sdachey` | Кандинский | Daft Punk — Harder Better Faster Stronger |
+| 2026-11-08 | Первый снег за окном | `2026-11-08_pervyy-sneg-za-oknom` | Ма | Max Richter — Richter: On the Nature of Daylight |
+| 2026-10-04 | Тихий день в Ботаническом саду | `2026-10-04_tikhiy-den-v-botanicheskom-sadu` | Моне | Norah Jones — Don't Know Why |
+| 2026-08-15 | Дачный день рождения под Астаной | `2026-08-15_dachnyy-den-rozhdeniya-pod-astanoy` | Коллаж Матисса | Dua Lipa — Levitating |
+| 2026-08-12 | Дорога в горы и звездное небо | `2026-08-12_doroga-v-gory-i-zvezdnoe-nebo` | Коллаж Матисса | Coldplay — A Sky Full of Stars |
+| 2026-06-14 | Старые фотографии в ауле у бабушки | `2026-06-14_starye-fotografii-v-aule-u-babushki` | Плёнка | Кино — Пачка сигарет |
+| 2025-07-02 | Большая вода и радуга над катером | `2025-07-02_bolshaya-voda-i-raduga-nad-katerom` | Моне | Ólafur Arnalds — saman |
+
+![Лента архива: 7 реальных дней](docs/screenshots/lenta-crop.jpg)
+
+<p>
+<img src="docs/screenshots/day-1.jpg" width="19%"> <img src="docs/screenshots/day-2.jpg" width="19%"> <img src="docs/screenshots/day-3.jpg" width="19%"> <img src="docs/screenshots/day-4.jpg" width="19%"> <img src="docs/screenshots/day-6.jpg" width="19%">
+</p>
+
 ## Чем отличаемся
 
 1. **Живая музыка.** Смена фото на биты песни (librosa beat_track), смена сцены на смене частей песни, мазки и фигуры реагируют на спектр в реальном времени (WebAudio AnalyserNode).
