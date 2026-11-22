@@ -1,0 +1,16 @@
+name: keep-awake
+# Бесплатный Render засыпает через 15 минут без запросов, и первый ответ идёт до минуты.
+# Пингуем API каждые 10 минут, чтобы жюри сразу видело работающий сайт.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: ping API
+        run: curl -fsS -m 120 https://proyavka-api.onrender.com/api/health || true
+      - name: ping site
+        run: curl -fsS -m 60 -o /dev/null https://limelight-diary.vercel.app || true
