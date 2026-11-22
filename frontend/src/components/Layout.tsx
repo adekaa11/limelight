@@ -1,7 +1,8 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { USE_MOCK, warmUp } from "../api";
 import { useEffect } from "react";
 import ServerBanner from "./ServerBanner";
+import { startReveal } from "../lib/reveal";
 import { useTheme } from "../lib/theme";
 
 const links = [
@@ -36,6 +37,8 @@ function LightSwitch() {
 export default function Layout() {
   // будим Render сразу при входе: пока человек смотрит архив или пишет о дне, сервер успеет проснуться
   useEffect(() => void warmUp(), []);
+  useEffect(() => startReveal(), []);
+  const location = useLocation();
   const navCls = (active: boolean, base: string) => `${base} ${active ? "text-safelight" : "text-muted hover:text-text"}`;
   return (
     <div className="min-h-screen">
@@ -66,7 +69,7 @@ export default function Layout() {
         </nav>
         <ServerBanner />
       </header>
-      <main className="mx-auto max-w-6xl px-4 pb-20 pt-6">
+      <main key={location.pathname} className="page-fade mx-auto max-w-6xl px-4 pb-20 pt-6">
         <Outlet />
       </main>
     </div>

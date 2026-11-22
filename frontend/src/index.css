@@ -168,12 +168,84 @@ textarea {
   animation: tray-sheen 5.5s ease-in-out infinite;
 }
 
+/* лампа «дышит»: второй слой свечения поверх фона, только opacity */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 45% at 50% -8%, rgb(var(--safelight) / 0.1), transparent 70%);
+  animation: lamp-breathe 5s ease-in-out infinite alternate;
+}
+@keyframes lamp-breathe {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* отпечатки на верёвке слегка покачиваются; при наведении замирают и выпрямляются */
+@keyframes sway {
+  from {
+    transform: rotate(-1deg);
+  }
+  to {
+    transform: rotate(1deg);
+  }
+}
+.sway {
+  animation: sway 5s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.group:hover .sway,
+.group:focus-visible .sway {
+  animation-play-state: paused;
+}
+
+/* проявление при прокрутке: из размытия в резкость, по очереди */
+.reveal-ready .reveal:not(.is-in) {
+  opacity: 0;
+  filter: blur(6px);
+}
+.reveal-ready .reveal {
+  transition:
+    opacity 0.6s ease,
+    filter 0.6s ease;
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+/* мягкая смена страниц */
+@keyframes page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-fade {
+  animation: page-fade 0.2s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .develop-loop,
-  .tray-sheen {
+  .tray-sheen,
+  .sway,
+  .page-fade,
+  body::before {
     animation: none;
   }
   .print-develop {
+    transition: none;
+  }
+  .reveal-ready .reveal:not(.is-in) {
+    opacity: 1;
+    filter: none;
+  }
+  .reveal-ready .reveal {
     transition: none;
   }
 }

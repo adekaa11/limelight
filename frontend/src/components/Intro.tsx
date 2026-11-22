@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import Poster from "./Poster";
 import PaletteStrip from "./PaletteStrip";
@@ -42,7 +42,7 @@ export default function Intro({ example, force = false }: { example?: Day; force
 
         <ol className="mt-8 grid gap-5 sm:grid-cols-3">
           {STEPS.map((s, i) => (
-            <li key={s.t} className="flex gap-3 sm:block">
+            <li key={s.t} className="reveal flex gap-3 sm:block" style={{ "--i": i } as CSSProperties}>
               <span className="font-serif text-4xl font-semibold leading-none text-safelight">{i + 1}</span>
               <span className="block">
                 <span className="block font-serif text-2xl leading-tight sm:mt-1">{s.t}</span>

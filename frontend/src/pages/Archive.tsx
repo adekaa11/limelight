@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode, type PointerEvent as RPointerEvent } from "react";
+import { forwardRef, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode, type PointerEvent as RPointerEvent, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import HTMLFlipBookRaw from "react-pageflip";
 import Poster from "../components/Poster";
@@ -221,9 +221,20 @@ function Feed({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
           <div aria-hidden className="absolute -left-4 -right-4 top-[22px] h-px bg-text/35" />
           {days.map((d, i) => {
             const tilt = ((hash(d.id) % 9) - 4) * 0.5; // ±2°
+            const h = hash(d.id);
             return (
-              <Link key={d.id} to={`/day/${d.id}`} draggable={false} className="group relative block w-40 shrink-0 pt-2 outline-none sm:w-48 lg:w-52">
+              <Link
+                key={d.id}
+                to={`/day/${d.id}`}
+                draggable={false}
+                className="reveal group relative block w-40 shrink-0 pt-2 outline-none sm:w-48 lg:w-52"
+                style={{ "--i": i } as CSSProperties}
+              >
                 <Pin />
+                <div
+                  className="sway origin-top"
+                  style={{ animationDuration: `${4 + (h % 3)}s`, animationDelay: `-${(h % 40) / 10}s` }}
+                >
                 <div
                   className="origin-top transition-transform duration-500 ease-out group-hover:-translate-y-1.5 group-hover:!rotate-0 group-focus-visible:-translate-y-1.5"
                   style={{ transform: `rotate(${tilt}deg)` }}
@@ -234,6 +245,7 @@ function Feed({ days, nums }: { days: Day[]; nums: Map<string, number> }) {
                     pageNumber={nums.get(d.id)}
                     className="rounded-[2px] shadow-print transition-shadow duration-500 group-hover:shadow-print-lift group-focus-visible:ring-2 group-focus-visible:ring-safelight"
                   />
+                </div>
                 </div>
                 <p className="mt-4 font-serif text-lg leading-tight group-hover:text-safelight">{d.title}</p>
                 <p className="mt-0.5 text-xs text-muted">

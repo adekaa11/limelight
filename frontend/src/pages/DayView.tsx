@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { Link, useParams } from "react-router-dom";
 import MemoryPlayer, { type MemoryPlayerHandle, type PlayerState } from "../player/MemoryPlayer";
 import { Renderer } from "../player/renderer";
@@ -271,7 +271,7 @@ function Recipe({ day, rules }: { day: Day; rules: string[] }) {
 
 function Block({ n, title, children }: { n: string; title: string; children: ReactNode }) {
   return (
-    <div className="card p-4">
+    <div className="reveal card p-4" style={{ "--i": Number(n) - 1 } as CSSProperties}>
       <p className="label mb-3">
         {n} · {title}
       </p>
