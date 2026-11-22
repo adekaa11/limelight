@@ -9,7 +9,7 @@
 | | |
 |---|---|
 | Демо | https://limelight-diary.vercel.app |
-| Видео (до 3 мин) | [ВПИСАТЬ: ссылка] |
+| Видео (до 3 мин) | https://drive.google.com/file/d/17toIxxcirmWJTlLBOB_JHhRIvXq5Mxw-/view?usp=sharing |
 | API | https://proyavka-api.onrender.com/docs (бесплатный сервер засыпает: первый запрос до минуты) |
 | Визуальная система | [docs/visual-system.md](docs/visual-system.md) |
 | Контракт API | [docs/api-contract.md](docs/api-contract.md) |

@@ -49,4 +49,4 @@
 
 ## Ссылки
 
-Прототип: https://limelight-diary.vercel.app · Видео: [ВПИСАТЬ] · Код: https://github.com/adekaa11/limelight
+Прототип: https://limelight-diary.vercel.app · Видео: https://drive.google.com/file/d/17toIxxcirmWJTlLBOB_JHhRIvXq5Mxw-/view?usp=sharing · Код: https://github.com/adekaa11/limelight
