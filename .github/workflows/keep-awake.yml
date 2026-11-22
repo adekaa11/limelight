@@ -11,6 +11,6 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: ping API
-        run: curl -fsS -m 120 https://proyavka-api.onrender.com/api/health || true
+        run: curl -fsS -m 120 -o /dev/null https://proyavka-api.onrender.com/api/days || true  # читает базу, чтобы Supabase не ушёл в паузу
       - name: ping site
         run: curl -fsS -m 60 -o /dev/null https://limelight-diary.vercel.app || true
